@@ -1,17 +1,10 @@
-import 'dotenv/config';
 import http from 'http';
 import express from 'express';
 import { WebSocket, WebSocketServer } from 'ws';
-import OpenAI from 'openai';
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Store connected clients
 const clients = new Set<WebSocket>();
@@ -82,13 +75,6 @@ wss.on('connection', (ws: WebSocket) => {
             client.send(message);
           }
         });
-
-        // Always process text message with OpenAI
-        if (text.trim().length > 0) {
-          processTextWithAI(text).catch((error) => {
-            console.error('Error processing text with AI:', error);
-          });
-        }
       }
     } catch (error) {
       console.error('Error processing message:', error);
@@ -105,46 +91,6 @@ wss.on('connection', (ws: WebSocket) => {
     clients.delete(ws);
   });
 });
-
-// Process text with OpenAI GPT-4o-mini
-async function processTextWithAI(text: string): Promise<void> {
-  try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful assistant. Respond concisely and clearly.',
-        },
-        {
-          role: 'user',
-          content: text,
-        },
-      ],
-      max_tokens: 150,
-      temperature: 0.7,
-    });
-
-    const aiResponse = completion.choices[0]?.message?.content;
-    if (aiResponse) {
-      const aiMessage = JSON.stringify({ 
-        type: 'text', 
-        text: `AI: ${aiResponse}` 
-      });
-      
-      // Broadcast AI response to all connected clients
-      clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(aiMessage);
-        }
-      });
-      
-      console.log(`AI response sent: ${aiResponse.substring(0, 50)}...`);
-    }
-  } catch (error) {
-    console.error('OpenAI API error:', error);
-  }
-}
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

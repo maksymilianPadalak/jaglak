@@ -292,7 +292,7 @@ export default function Home() {
             </button>
           </div>
           <p className="text-xs text-black/70 mt-2 font-bold uppercase">
-            {isConnected ? 'Connected - Messages sent to server, AI responses for questions (?)' : 'Disconnected - Cannot send messages'}
+            {isConnected ? 'Connected - Messages broadcast to all clients' : 'Disconnected - Cannot send messages'}
           </p>
         </div>
       </div>
