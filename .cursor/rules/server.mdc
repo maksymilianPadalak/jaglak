@@ -1,0 +1,70 @@
+---
+description: Server-side patterns and conventions
+globs: ["apps/server/**"]
+alwaysApply: false
+---
+
+# Server Conventions
+
+## Express Setup
+
+- Use Express for HTTP server and static file serving
+- Attach WebSocket server to HTTP server
+- Serve static files from `public/` directory
+- Use environment variable for PORT (default: 3000)
+
+## WebSocket Server
+
+- Use `ws` library (not Socket.io)
+- Store peers in Map: `Map<socketId, Peer>`
+- Store rooms in Map: `Map<roomId, Set<socketId>>`
+- Generate unique socket IDs: `peer_${nextId++}`
+
+## Message Handling
+
+- Parse all incoming messages as JSON
+- Validate message structure matches ClientMessage type
+- Handle errors gracefully - send error message back to client
+- Log all connection events for debugging
+
+## Room Management
+
+- Auto-create rooms when first peer joins
+- Clean up empty rooms when last peer leaves
+- Notify peers when users join/leave
+- Send existing users list to new joiners
+
+## Broadcasting
+
+- Use `setInterval` for periodic broadcasts (e.g., "Iberion nie zyje")
+- Broadcast to all connected peers
+- Check WebSocket readyState before sending
+- Handle closed connections gracefully
+
+## Error Handling
+
+- Wrap message parsing in try-catch
+- Send error messages back to clients
+- Log errors to console
+- Don't crash server on client errors
+
+## Code Structure
+
+```typescript
+// Store peers and rooms
+const peers = new Map<string, Peer>();
+const rooms = new Map<string, Set<string>>();
+
+// Handle WebSocket connection
+wss.on('connection', (ws) => {
+  // Generate socket ID
+  // Set up message handlers
+  // Send welcome message
+});
+
+// Handle messages
+function handleMessage(socketId: string, data: ClientMessage) {
+  // Switch on message type
+  // Route to appropriate handler
+}
+```

@@ -1,156 +1,125 @@
-# WebRTC Signaling Server
+# Jaglak - WebRTC Monorepo
 
-A raw WebSocket-based signaling server for WebRTC peer-to-peer connections. Compatible with Unreal Engine WebRTC and any WebRTC client.
+A Turborepo monorepo containing a WebRTC signaling server and Next.js frontend.
 
-## Features
+## Structure
 
-- Raw WebSocket protocol (no Socket.io overhead)
-- Room-based peer connections
-- JSON message protocol
-- Compatible with Unreal Engine WebRTC plugins
-- Simple and lightweight
+```
+jaglak/
+├── apps/
+│   ├── server/     # WebRTC signaling server (Express + WebSocket)
+│   └── web/         # Next.js frontend
+├── packages/
+│   └── shared-types/  # Shared TypeScript types
+└── turbo.json       # Turborepo configuration
+```
 
-## Setup
+## Getting Started
 
-1. Install dependencies:
+### Install Dependencies
+
 ```bash
 pnpm install
 ```
 
-2. Build TypeScript:
-```bash
-pnpm run build
-```
+### Development
 
-3. Start the server:
-```bash
-pnpm start
-```
+Run all apps in development mode:
 
-For development with auto-reload (runs TypeScript directly):
 ```bash
 pnpm dev
 ```
 
-The server will run on `ws://localhost:3000`
+This will start:
+- **Server**: `http://localhost:3000` (WebSocket signaling server)
+- **Web**: `http://localhost:3001` (Next.js frontend)
 
-## WebSocket Protocol
+### Build
 
-All messages are JSON formatted:
+Build all apps:
 
-### Client → Server Messages
-
-**Join Room:**
-```json
-{
-  "type": "join-room",
-  "roomId": "room1"
-}
+```bash
+pnpm build
 ```
 
-**Send Offer:**
-```json
-{
-  "type": "offer",
-  "target": "peer_1",
-  "offer": { /* RTCSessionDescriptionInit */ }
-}
+### Start Production
+
+Start all apps in production mode:
+
+```bash
+pnpm start
 ```
 
-**Send Answer:**
-```json
-{
-  "type": "answer",
-  "target": "peer_1",
-  "answer": { /* RTCSessionDescriptionInit */ }
-}
+## Individual App Commands
+
+### Server
+
+```bash
+cd apps/server
+pnpm dev    # Development with hot reload
+pnpm build  # Build TypeScript
+pnpm start  # Run production build
 ```
 
-**Send ICE Candidate:**
-```json
-{
-  "type": "ice-candidate",
-  "target": "peer_1",
-  "candidate": { /* RTCIceCandidateInit */ }
-}
+### Web (Next.js)
+
+```bash
+cd apps/web
+pnpm dev    # Development server on port 3001
+pnpm build  # Production build
+pnpm start  # Production server on port 3001
 ```
 
-**Leave Room:**
-```json
-{
-  "type": "leave-room"
-}
+## Environment Variables
+
+### Web App
+
+Create `apps/web/.env.local`:
+
+```env
+NEXT_PUBLIC_WS_URL=ws://localhost:3000
 ```
 
-### Server → Client Messages
-
-**Connected:**
-```json
-{
-  "type": "connected",
-  "socketId": "peer_1"
-}
+For production, use `wss://` (secure WebSocket):
+```env
+NEXT_PUBLIC_WS_URL=wss://your-server-domain.com
 ```
 
-**Existing Users:**
-```json
-{
-  "type": "existing-users",
-  "users": ["peer_2", "peer_3"]
-}
-```
-
-**User Joined:**
-```json
-{
-  "type": "user-joined",
-  "userId": "peer_2"
-}
-```
-
-**User Left:**
-```json
-{
-  "type": "user-left",
-  "userId": "peer_2"
-}
-```
-
-**Offer/Answer/ICE Candidate** (forwarded from other peers):
-```json
-{
-  "type": "offer", // or "answer" or "ice-candidate"
-  "sender": "peer_2",
-  "offer": { /* RTCSessionDescriptionInit */ }
-}
-```
-
-**Error:**
-```json
-{
-  "type": "error",
-  "message": "Error description"
-}
-```
-
-## Usage with Unreal Engine
-
-1. Connect to `ws://localhost:3000` (or your server's IP)
-2. Wait for `connected` message to get your `socketId`
-3. Send `join-room` with your room ID
-4. When you receive `existing-users` or `user-joined`, create WebRTC offers/answers
-5. Exchange SDP offers/answers and ICE candidates through the server
-6. Once connected, video/audio streams directly between peers
-
-## Port
+### Server
 
 The server runs on port 3000 by default. Change it with:
+
 ```bash
-PORT=8080 pnpm start
+PORT=8080 pnpm --filter @jaglak/server start
 ```
 
-## Notes
+## How It Works
 
-- For production, use HTTPS/WSS (required by browsers for WebRTC)
-- Consider adding a TURN server for better connectivity behind restrictive firewalls
-- The server only handles signaling - actual media streams are peer-to-peer
+1. **Server** (`apps/server`): WebRTC signaling server using raw WebSocket
+   - Handles room-based peer connections
+   - Relays SDP offers/answers and ICE candidates
+   - Broadcasts messages to connected clients
+
+2. **Web** (`apps/web`): Next.js frontend
+   - Connects to signaling server via WebSocket
+   - Handles WebRTC peer connections
+   - Displays local and remote video streams
+
+3. **Shared Types** (`packages/shared-types`): TypeScript types shared between server and client
+
+## Usage
+
+1. Start the server: `pnpm dev` (or `pnpm --filter @jaglak/server dev`)
+2. Open `http://localhost:3001` in your browser
+3. Allow camera/microphone permissions
+4. Enter a room ID and click "Join Room"
+5. Share the room ID with your friend
+6. Both users will see each other's video streams
+
+## Technologies
+
+- **Turborepo**: Monorepo build system
+- **Next.js**: React framework
+- **TypeScript**: Type safety
+- **WebSocket**: Real-time signaling
+- **WebRTC**: Peer-to-peer video/audio streaming

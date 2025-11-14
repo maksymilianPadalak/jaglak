@@ -1,7 +1,17 @@
 node_modules/
 npm-debug.log
 .env
+.env.local
+.env*.local
 .DS_Store
 dist/
 *.log
+.next/
+.turbo/
+apps/web/.next/
+apps/web/.env.local
+
+# Cursor (keep rules, ignore other files)
+.cursor/*
+!.cursor/rules/
 

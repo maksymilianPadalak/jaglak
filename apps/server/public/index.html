@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebRTC Client</title>
-    <script src="/socket.io/socket.io.js"></script>
     <style>
         * {
             margin: 0;
@@ -156,7 +155,11 @@
     </div>
 
     <script>
-        const socket = io();
+        const WS_URL = window.location.protocol === 'https:' 
+            ? `wss://${window.location.host}` 
+            : `ws://${window.location.host}`;
+        
+        let ws;
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
         const roomInput = document.getElementById('roomInput');
@@ -167,6 +170,7 @@
         let localStream = null;
         let peerConnections = new Map();
         let currentRoom = null;
+        let mySocketId = null;
 
         const configuration = {
             iceServers: [
@@ -174,6 +178,83 @@
                 { urls: 'stun:stun1.l.google.com:19302' }
             ]
         };
+
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+            
+            ws.onopen = () => {
+                updateStatus('Connecting to server...');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateStatus('Connection error', 'error');
+            };
+
+            ws.onclose = () => {
+                updateStatus('Disconnected from server', 'error');
+            };
+        }
+
+        function handleServerMessage(data) {
+            switch (data.type) {
+                case 'connected':
+                    mySocketId = data.socketId;
+                    updateStatus('Connected to server');
+                    break;
+                
+                case 'existing-users':
+                    data.users.forEach(userId => {
+                        createOffer(userId);
+                    });
+                    break;
+                
+                case 'user-joined':
+                    createOffer(data.userId);
+                    break;
+                
+                case 'offer':
+                    handleOffer(data);
+                    break;
+                
+                case 'answer':
+                    handleAnswer(data);
+                    break;
+                
+                case 'ice-candidate':
+                    handleIceCandidate(data);
+                    break;
+                
+                case 'user-left':
+                    const pc = peerConnections.get(data.userId);
+                    if (pc) {
+                        pc.close();
+                        peerConnections.delete(data.userId);
+                    }
+                    remoteVideo.srcObject = null;
+                    updateStatus('Peer disconnected');
+                    break;
+                
+                case 'stream':
+                    console.log('Stream message:', data.text);
+                    break;
+                
+                case 'error':
+                    updateStatus(`Error: ${data.message}`, 'error');
+                    break;
+            }
+        }
+
+        function sendMessage(message) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+            }
+        }
 
         async function getLocalStream() {
             try {
@@ -192,23 +273,21 @@
         function createPeerConnection(targetId) {
             const pc = new RTCPeerConnection(configuration);
 
-            // Add local stream tracks
             if (localStream) {
                 localStream.getTracks().forEach(track => {
                     pc.addTrack(track, localStream);
                 });
             }
 
-            // Handle remote stream
             pc.ontrack = (event) => {
                 remoteVideo.srcObject = event.streams[0];
                 updateStatus('Connected to peer', 'connected');
             };
 
-            // Handle ICE candidates
             pc.onicecandidate = (event) => {
                 if (event.candidate) {
-                    socket.emit('ice-candidate', {
+                    sendMessage({
+                        type: 'ice-candidate',
                         target: targetId,
                         candidate: event.candidate
                     });
@@ -233,7 +312,8 @@
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
 
-                socket.emit('offer', {
+                sendMessage({
+                    type: 'offer',
                     target: targetId,
                     offer: offer
                 });
@@ -251,7 +331,8 @@
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
 
-                socket.emit('answer', {
+                sendMessage({
+                    type: 'answer',
                     target: data.sender,
                     answer: answer
                 });
@@ -298,35 +379,6 @@
             remoteVideo.srcObject = null;
         }
 
-        // Socket event handlers
-        socket.on('connect', () => {
-            updateStatus('Connected to server');
-        });
-
-        socket.on('existing-users', (userIds) => {
-            userIds.forEach(userId => {
-                createOffer(userId);
-            });
-        });
-
-        socket.on('user-joined', (userId) => {
-            createOffer(userId);
-        });
-
-        socket.on('offer', handleOffer);
-        socket.on('answer', handleAnswer);
-        socket.on('ice-candidate', handleIceCandidate);
-
-        socket.on('user-left', (userId) => {
-            const pc = peerConnections.get(userId);
-            if (pc) {
-                pc.close();
-                peerConnections.delete(userId);
-            }
-            remoteVideo.srcObject = null;
-            updateStatus('Peer disconnected');
-        });
-
         // UI event handlers
         joinBtn.addEventListener('click', async () => {
             const roomId = roomInput.value.trim();
@@ -337,7 +389,7 @@
 
             await getLocalStream();
             currentRoom = roomId;
-            socket.emit('join-room', roomId);
+            sendMessage({ type: 'join-room', roomId: roomId });
             
             joinBtn.disabled = true;
             leaveBtn.disabled = false;
@@ -347,7 +399,7 @@
 
         leaveBtn.addEventListener('click', () => {
             if (currentRoom) {
-                socket.emit('leave-room', currentRoom);
+                sendMessage({ type: 'leave-room' });
                 currentRoom = null;
             }
             
@@ -360,6 +412,7 @@
         });
 
         // Initialize
+        connectWebSocket();
         getLocalStream();
     </script>
 </body>

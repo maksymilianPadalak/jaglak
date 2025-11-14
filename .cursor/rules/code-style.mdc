@@ -1,0 +1,76 @@
+---
+description: Code style and formatting conventions
+alwaysApply: true
+---
+
+# Code Style
+
+## General
+
+- Use 2 spaces for indentation
+- Use single quotes for strings (TypeScript/JavaScript)
+- Use semicolons
+- Maximum line length: 100 characters
+- Use trailing commas in arrays and objects
+
+## Naming Conventions
+
+- Variables and functions: `camelCase`
+- Types and interfaces: `PascalCase`
+- Constants: `UPPER_SNAKE_CASE`
+- Files: `kebab-case.ts` or `PascalCase.tsx` for components
+
+## TypeScript
+
+- Always provide explicit types for function parameters and return values
+- Use `interface` for object shapes
+- Use `type` for unions, intersections, and aliases
+- Prefer `const` over `let`, avoid `var`
+- Use `as const` for literal types when needed
+
+## React/Next.js
+
+- Use functional components only
+- Use hooks for state and side effects
+- Extract custom hooks for reusable logic
+- Keep components small and focused
+- Use meaningful prop names
+
+## Comments
+
+- Write self-documenting code
+- Add comments for complex logic or non-obvious decisions
+- Use JSDoc comments for public APIs
+- Remove commented-out code before committing
+
+## Imports
+
+- Group imports: external packages, then internal packages, then relative
+- Use absolute imports with path aliases when configured
+- Remove unused imports
+
+```typescript
+// External packages
+import { useState, useEffect } from 'react';
+import express from 'express';
+
+// Internal packages
+import { ServerMessage } from '@jaglak/shared-types';
+
+// Relative imports
+import { handleMessage } from './handlers';
+```
+
+## Error Handling
+
+- Always handle errors explicitly
+- Use try-catch for async operations
+- Provide meaningful error messages
+- Log errors appropriately (console.error for debugging)
+
+## Git
+
+- Write clear, descriptive commit messages
+- Use conventional commits format when possible
+- Commit related changes together
+- Don't commit build artifacts or node_modules

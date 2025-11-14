@@ -1,0 +1,41 @@
+---
+description: Turborepo monorepo structure and conventions
+alwaysApply: true
+---
+
+# Monorepo Structure
+
+This project uses Turborepo with pnpm workspaces.
+
+## Structure
+
+- `apps/server` - WebRTC signaling server (Express + WebSocket)
+- `apps/web` - Next.js frontend application
+- `packages/shared-types` - Shared TypeScript types between server and client
+
+## Workspace Conventions
+
+- Always use workspace protocol for internal dependencies: `"@jaglak/shared-types": "workspace:*"`
+- Use `pnpm --filter <package-name>` to run commands in specific packages
+- Use `pnpm` commands at root to run across all packages
+- Never use `npm` or `yarn` - always use `pnpm`
+
+## Package Naming
+
+- Server: `@jaglak/server`
+- Web: `@jaglak/web`
+- Shared Types: `@jaglak/shared-types`
+
+## Build Commands
+
+- `pnpm dev` - Run all apps in development mode
+- `pnpm build` - Build all apps
+- `pnpm start` - Start all apps in production mode
+- `pnpm --filter @jaglak/server dev` - Run only server
+- `pnpm --filter @jaglak/web dev` - Run only web app
+
+## File Organization
+
+- Keep package-specific code in respective `apps/` or `packages/` directories
+- Shared code goes in `packages/`
+- Root-level configs (turbo.json, pnpm-workspace.yaml) apply to all packages

@@ -1,0 +1,60 @@
+---
+description: Next.js conventions and patterns
+globs: ["apps/web/**"]
+alwaysApply: false
+---
+
+# Next.js Conventions
+
+## App Router
+
+- Use App Router (not Pages Router)
+- Client components use `'use client'` directive
+- Server components are default (no directive needed)
+
+## Client Components
+
+- WebRTC logic must be in client components (`'use client'`)
+- Use React hooks: `useState`, `useRef`, `useEffect`
+- Store WebSocket and peer connections in refs to avoid re-renders
+- Clean up connections in useEffect cleanup function
+
+## Environment Variables
+
+- Use `NEXT_PUBLIC_` prefix for client-accessible env vars
+- Store WebSocket URL in `NEXT_PUBLIC_WS_URL`
+- Create `.env.local` file (gitignored) for local development
+- Default to `ws://localhost:3000` if env var not set
+
+## Styling
+
+- Use Tailwind CSS for all styling
+- Follow responsive design patterns
+- Use semantic HTML elements
+- Keep components focused and reusable
+
+## File Structure
+
+```
+apps/web/
+  app/
+    page.tsx          # Main page
+    layout.tsx        # Root layout
+    globals.css       # Global styles
+  public/            # Static assets
+  .env.local         # Environment variables (gitignored)
+```
+
+## State Management
+
+- Use React hooks for local state
+- Use refs for mutable values (WebSocket, MediaStream, RTCPeerConnection)
+- Avoid prop drilling - use context if needed
+- Keep state as local as possible
+
+## Performance
+
+- Use `useRef` for values that don't trigger re-renders
+- Clean up resources in useEffect cleanup
+- Avoid unnecessary re-renders
+- Use React.memo for expensive components if needed

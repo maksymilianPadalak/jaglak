@@ -1,9 +1,20 @@
 import http from 'http';
+import express from 'express';
+import path from 'path';
 import { WebSocket, WebSocketServer } from 'ws';
-import { Peer, ClientMessage, ServerMessage } from './types';
+import { ClientMessage, ServerMessage } from '@jaglak/shared-types';
 
-const server = http.createServer();
+interface Peer {
+  ws: WebSocket;
+  roomId: string | null;
+}
+
+const app = express();
+const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Store connected peers: Map<socketId, Peer>
 const peers = new Map<string, Peer>();
@@ -216,7 +227,8 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`WebRTC signaling server running on ws://localhost:${PORT}`);
+  console.log(`WebRTC signaling server running on http://localhost:${PORT}`);
+  console.log(`WebSocket available at ws://localhost:${PORT}`);
   console.log(`Ready for Unreal Engine and WebRTC clients`);
   console.log(`Streaming "Iberion nie zyje" every 5 seconds to all connected clients`);
 });

@@ -1,0 +1,67 @@
+---
+description: Shared types package usage and conventions
+globs: ["packages/shared-types/**"]
+alwaysApply: false
+---
+
+# Shared Types Package
+
+## Purpose
+
+The `@jaglak/shared-types` package contains TypeScript types shared between the server and client. This ensures type safety across the entire application.
+
+## Structure
+
+- All message types are in `packages/shared-types/index.ts`
+- Export both individual interfaces and union types
+- Use discriminated unions for message types (type field)
+
+## Adding New Types
+
+1. Add interface/type to `packages/shared-types/index.ts`
+2. Add to appropriate union type (`ClientMessage` or `ServerMessage`)
+3. Update both server and client code to use new type
+4. Ensure types are compatible with JSON serialization
+
+## Message Types
+
+### Client → Server Messages
+
+- `JoinRoomMessage` - Join a room
+- `OfferMessage` - Send WebRTC offer
+- `AnswerMessage` - Send WebRTC answer
+- `IceCandidateMessage` - Send ICE candidate
+- `LeaveRoomMessage` - Leave current room
+
+### Server → Client Messages
+
+- `ConnectedMessage` - Connection established
+- `ExistingUsersMessage` - Users already in room
+- `UserJoinedMessage` - New user joined
+- `UserLeftMessage` - User left room
+- `ForwardedOfferMessage` - Offer from another peer
+- `ForwardedAnswerMessage` - Answer from another peer
+- `ForwardedIceCandidateMessage` - ICE candidate from another peer
+- `ErrorMessage` - Error occurred
+- `StreamMessage` - Periodic broadcast message
+
+## Usage
+
+```typescript
+// Import types
+import { ServerMessage, ClientMessage } from '@jaglak/shared-types';
+
+// Type guard for discriminated union
+if (message.type === 'connected') {
+  // TypeScript knows message.socketId exists
+  console.log(message.socketId);
+}
+```
+
+## Best Practices
+
+- Never duplicate type definitions
+- Always import from shared package
+- Keep types serializable (no functions, classes, or complex objects)
+- Use WebRTC standard types where applicable
+- Document complex types with comments

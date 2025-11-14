@@ -1,0 +1,43 @@
+---
+description: TypeScript conventions and type safety
+alwaysApply: true
+---
+
+# TypeScript Conventions
+
+## Type Safety
+
+- Always use TypeScript - no JavaScript files
+- Use strict mode in all tsconfig.json files
+- Prefer interfaces over types for object shapes
+- Use type unions for discriminated unions (like message types)
+
+## Shared Types
+
+- All WebRTC message types are in `@jaglak/shared-types`
+- Import types from shared package: `import { ServerMessage, ClientMessage } from '@jaglak/shared-types'`
+- Never duplicate type definitions - always use shared types
+- Add new message types to `packages/shared-types/index.ts`
+
+## Type Imports
+
+```typescript
+// ✅ Good - Import from shared types
+import { ServerMessage, ClientMessage } from '@jaglak/shared-types';
+
+// ❌ Bad - Don't duplicate types
+interface ServerMessage { ... }
+```
+
+## TypeScript Configuration
+
+- Server uses `commonjs` module system
+- Web (Next.js) uses `esnext` module system
+- Both use strict type checking
+- Path aliases configured in tsconfig.json for shared packages
+
+## WebRTC Types
+
+- Use browser WebRTC types: `RTCSessionDescriptionInit`, `RTCIceCandidateInit`
+- These are available via DOM lib in tsconfig.json
+- Never create custom types for WebRTC standard types
