@@ -8,6 +8,16 @@ export default function Home() {
   const [roomId, setRoomId] = useState('room1');
   const [status, setStatus] = useState('Not connected');
   const [joined, setJoined] = useState(false);
+  const [streamMessages, setStreamMessages] = useState<string[]>([]);
+  const [connectionStats, setConnectionStats] = useState<{
+    connectionState: string;
+    iceConnectionState: string;
+    iceGatheringState: string;
+    signalingState: string;
+    localCandidate?: string;
+    remoteCandidate?: string;
+  } | null>(null);
+  const [showStats, setShowStats] = useState(false);
   
   const wsRef = useRef<WebSocket | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -15,6 +25,7 @@ export default function Home() {
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const mySocketIdRef = useRef<string | null>(null);
+  const autoJoinedRef = useRef<boolean>(false);
 
   const configuration = {
     iceServers: [
@@ -23,17 +34,56 @@ export default function Home() {
     ]
   };
 
+  const updateConnectionStats = async () => {
+    const pcs = Array.from(peerConnectionsRef.current.values());
+    if (pcs.length === 0) {
+      setConnectionStats(null);
+      return;
+    }
+
+    const pc = pcs[0]; // Get first peer connection
+    const stats: any = {
+      connectionState: pc.connectionState,
+      iceConnectionState: pc.iceConnectionState,
+      iceGatheringState: pc.iceGatheringState,
+      signalingState: pc.signalingState,
+    };
+
+    try {
+      const statsReport = await pc.getStats();
+      statsReport.forEach((report) => {
+        if (report.type === 'local-candidate' && report.candidateType) {
+          stats.localCandidate = `${report.candidateType} (${report.protocol})`;
+        }
+        if (report.type === 'remote-candidate' && report.candidateType) {
+          stats.remoteCandidate = `${report.candidateType} (${report.protocol})`;
+        }
+      });
+    } catch (error) {
+      console.error('Error getting stats:', error);
+    }
+
+    setConnectionStats(stats);
+  };
+
   useEffect(() => {
     connectWebSocket();
     getLocalStream();
 
+    // Poll connection stats
+    const statsInterval = setInterval(() => {
+      updateConnectionStats();
+    }, 1000);
+
     return () => {
       cleanup();
+      clearInterval(statsInterval);
     };
   }, []);
 
   const connectWebSocket = () => {
-    const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000';
+    // Hardcoded for testing
+    const WS_URL = 'ws://localhost:3000';
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
@@ -63,6 +113,13 @@ export default function Home() {
         mySocketIdRef.current = data.socketId;
         setStatus('Connected to server');
         setIsConnected(true);
+        // Auto-join room for testing
+        if (!autoJoinedRef.current && roomId) {
+          autoJoinedRef.current = true;
+          sendMessage({ type: 'join-room', roomId: roomId });
+          setJoined(true);
+          setStatus(`Auto-joined room: ${roomId}`);
+        }
         break;
 
       case 'existing-users':
@@ -101,6 +158,7 @@ export default function Home() {
 
       case 'stream':
         console.log('Stream message:', data.text);
+        setStreamMessages(prev => [...prev.slice(-4), data.text]); // Keep last 5 messages
         break;
 
       case 'error':
@@ -160,9 +218,20 @@ export default function Home() {
 
     pc.onconnectionstatechange = () => {
       console.log(`Connection state: ${pc.connectionState}`);
+      updateConnectionStats();
       if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
         setStatus('Connection lost');
       }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log(`ICE connection state: ${pc.iceConnectionState}`);
+      updateConnectionStats();
+    };
+
+    pc.onicegatheringstatechange = () => {
+      console.log(`ICE gathering state: ${pc.iceGatheringState}`);
+      updateConnectionStats();
     };
 
     return pc;
@@ -263,6 +332,7 @@ export default function Home() {
   const handleLeaveRoom = () => {
     sendMessage({ type: 'leave-room' });
     setJoined(false);
+    autoJoinedRef.current = false;
     cleanup();
     getLocalStream();
     setStatus('Left room');
@@ -271,9 +341,30 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-6xl w-full">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-          WebRTC Video Chat
-        </h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-3xl font-bold text-gray-800">
+            WebRTC Video Chat
+          </h1>
+          <div className="flex gap-2 items-center">
+            <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
+              TEST MODE
+            </div>
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold hover:bg-blue-200 transition"
+            >
+              {showStats ? 'Hide' : 'Show'} Stats
+            </button>
+            <a
+              href="https://test.webrtc.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold hover:bg-green-200 transition"
+            >
+              WebRTC Test
+            </a>
+          </div>
+        </div>
 
         <div className="flex gap-4 mb-6 flex-wrap">
           <input
@@ -328,7 +419,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={`p-4 rounded-lg text-center ${
+        <div className={`p-4 rounded-lg text-center mb-4 ${
           status.includes('Connected') || status.includes('Connected to peer')
             ? 'bg-green-100 text-green-800'
             : status.includes('Error') || status.includes('Disconnected')
@@ -337,6 +428,67 @@ export default function Home() {
         }`}>
           {status}
         </div>
+
+        {showStats && connectionStats && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+            <div className="text-sm font-semibold text-gray-800 mb-3">WebRTC Connection Stats:</div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="font-semibold text-gray-600">Connection State:</span>
+                <span className={`ml-2 font-mono ${
+                  connectionStats.connectionState === 'connected' ? 'text-green-600' :
+                  connectionStats.connectionState === 'failed' ? 'text-red-600' :
+                  'text-yellow-600'
+                }`}>
+                  {connectionStats.connectionState}
+                </span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-600">ICE Connection:</span>
+                <span className={`ml-2 font-mono ${
+                  connectionStats.iceConnectionState === 'connected' ? 'text-green-600' :
+                  connectionStats.iceConnectionState === 'failed' ? 'text-red-600' :
+                  'text-yellow-600'
+                }`}>
+                  {connectionStats.iceConnectionState}
+                </span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-600">ICE Gathering:</span>
+                <span className="ml-2 font-mono text-gray-700">{connectionStats.iceGatheringState}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-600">Signaling State:</span>
+                <span className="ml-2 font-mono text-gray-700">{connectionStats.signalingState}</span>
+              </div>
+              {connectionStats.localCandidate && (
+                <div className="col-span-2">
+                  <span className="font-semibold text-gray-600">Local Candidate:</span>
+                  <span className="ml-2 font-mono text-gray-700">{connectionStats.localCandidate}</span>
+                </div>
+              )}
+              {connectionStats.remoteCandidate && (
+                <div className="col-span-2">
+                  <span className="font-semibold text-gray-600">Remote Candidate:</span>
+                  <span className="ml-2 font-mono text-gray-700">{connectionStats.remoteCandidate}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {streamMessages.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="text-sm font-semibold text-blue-800 mb-2">Stream Messages (Last 5):</div>
+            <div className="space-y-1">
+              {streamMessages.map((msg, idx) => (
+                <div key={idx} className="text-sm text-blue-700 font-mono">
+                  {msg}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
