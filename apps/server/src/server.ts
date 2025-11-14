@@ -92,21 +92,7 @@ wss.on('connection', (ws: WebSocket) => {
   });
 });
 
-// Broadcast "Iberion nie zyje" every 5 seconds to all connected clients
-setInterval(() => {
-  const message = JSON.stringify({ text: 'Iberion nie zyje' });
-  
-  clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  });
-  
-  console.log(`Broadcasted to ${clients.size} clients: Iberion nie zyje`);
-}, 5000);
-
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`WebSocket server running on ws://localhost:${PORT}`);
-  console.log(`Streaming "Iberion nie zyje" every 5 seconds`);
 });
