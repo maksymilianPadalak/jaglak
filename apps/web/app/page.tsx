@@ -2,10 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+interface Message {
+  id: string;
+  type: 'text' | 'image';
+  content: string;
+}
+
 export default function Home() {
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const messageIdRef = useRef(0);
 
   useEffect(() => {
     // Connect to production WebSocket server
@@ -23,9 +30,52 @@ export default function Home() {
     };
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.text) {
-        setMessages((prev) => [...prev.slice(-49), data.text]); // Keep last 50 messages
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'image' && data.data) {
+          // Handle image message
+          const message: Message = {
+            id: `msg_${messageIdRef.current++}`,
+            type: 'image',
+            content: data.data,
+          };
+          setMessages((prev) => [...prev.slice(-49), message]); // Keep last 50 messages
+        } else if (data.type === 'text' && data.text) {
+          // Handle text message
+          const message: Message = {
+            id: `msg_${messageIdRef.current++}`,
+            type: 'text',
+            content: data.text,
+          };
+          setMessages((prev) => [...prev.slice(-49), message]);
+        } else if (data.text) {
+          // Legacy format - check if it's an image in text format
+          const text = data.text;
+          if (text.length > 1000) {
+            // Try to detect base64 image data
+            const base64Match = text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
+            if (base64Match) {
+              const message: Message = {
+                id: `msg_${messageIdRef.current++}`,
+                type: 'image',
+                content: base64Match[0],
+              };
+              setMessages((prev) => [...prev.slice(-49), message]);
+              return;
+            }
+          }
+          
+          // Regular text message
+          const message: Message = {
+            id: `msg_${messageIdRef.current++}`,
+            type: 'text',
+            content: text,
+          };
+          setMessages((prev) => [...prev.slice(-49), message]);
+        }
+      } catch (error) {
+        console.error('Error parsing message:', error);
       }
     };
 
@@ -66,9 +116,26 @@ export default function Home() {
                 Waiting for messages...
               </div>
             ) : (
-              messages.map((msg, idx) => (
-                <div key={idx} className="text-gray-700 font-mono text-sm bg-white p-2 rounded border">
-                  {msg}
+              messages.map((msg) => (
+                <div key={msg.id} className="bg-white p-2 rounded border">
+                  {msg.type === 'image' ? (
+                    <div className="flex flex-col items-center">
+                      <img 
+                        src={msg.content} 
+                        alt="Received image" 
+                        className="max-w-full max-h-64 rounded border"
+                        onError={(e) => {
+                          console.error('Image load error:', e);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <span className="text-xs text-gray-500 mt-1">Image</span>
+                    </div>
+                  ) : (
+                    <div className="text-gray-700 font-mono text-sm break-words">
+                      {msg.content}
+                    </div>
+                  )}
                 </div>
               ))
             )}
