@@ -75,10 +75,10 @@ wss.on('connection', (ws: WebSocket) => {
           // Not JSON, continue as normal text
         }
         
-        // Broadcast text message to all OTHER connected clients (excluding sender)
+        // Broadcast text message to all connected clients (including sender for echo)
         const message = JSON.stringify({ type: 'text', text });
         clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN && client !== ws) {
+          if (client.readyState === WebSocket.OPEN) {
             client.send(message);
           }
         });

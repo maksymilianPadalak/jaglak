@@ -1,10 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity } from 'lucide-react';
+import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, Send } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -16,8 +13,10 @@ interface Message {
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [prompt, setPrompt] = useState('');
   const wsRef = useRef<WebSocket | null>(null);
   const messageIdRef = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Connect to production WebSocket server
@@ -104,17 +103,16 @@ export default function Home() {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messages.length > 0) {
-      // Find the ScrollArea viewport element
-      const viewport = document.querySelector('[data-slot="scroll-area-viewport"]') as HTMLElement;
-      if (viewport) {
-        setTimeout(() => {
-          viewport.scrollTo({
-            top: viewport.scrollHeight,
+    if (scrollContainerRef.current && messages.length > 0) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTo({
+            top: scrollContainerRef.current.scrollHeight,
             behavior: 'smooth',
           });
-        }, 100);
-      }
+        }
+      }, 50);
     }
   }, [messages]);
 
@@ -127,118 +125,176 @@ export default function Home() {
     });
   };
 
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <Card className="bg-card/95 backdrop-blur-xl shadow-2xl border-border/50">
-          <CardHeader className="space-y-4 pb-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="space-y-2">
-                <CardTitle className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-                  WebSocket Monitor
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  Real-time message and image streaming dashboard
-                </CardDescription>
-              </div>
-              <Badge 
-                variant={isConnected ? 'default' : 'destructive'}
-                className="text-base px-5 py-2.5 flex items-center gap-2 h-auto"
-              >
-                {isConnected ? (
-                  <>
-                    <Wifi className="h-5 w-5" />
-                    <span className="font-semibold">Connected</span>
-                  </>
-                ) : (
-                  <>
-                    <WifiOff className="h-5 w-5" />
-                    <span className="font-semibold">Disconnected</span>
-                  </>
-                )}
-              </Badge>
-            </div>
-            
-            <div className="flex items-center gap-4 flex-wrap">
-              <Badge variant="secondary" className="text-base px-4 py-2 flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                {messages.length} Total
-              </Badge>
-              <Badge variant="outline" className="text-base px-4 py-2 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                {messages.filter(m => m.type === 'text').length} Text
-              </Badge>
-              <Badge variant="outline" className="text-base px-4 py-2 flex items-center gap-2">
-                <ImageIcon className="h-4 w-4" />
-                {messages.filter(m => m.type === 'image').length} Images
-              </Badge>
-            </div>
-          </CardHeader>
+  const sendMessage = () => {
+    if (!prompt.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      return;
+    }
 
-          <CardContent>
-            <ScrollArea className="h-[calc(100vh-320px)] min-h-[700px] w-full rounded-lg">
-              <div className="space-y-6 pr-4">
-                {messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full py-32">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-purple-500/20 blur-3xl rounded-full"></div>
-                      <MessageSquare className="h-24 w-24 text-muted-foreground relative z-10" />
-                    </div>
-                    <p className="text-2xl text-muted-foreground font-semibold mt-8">Waiting for messages...</p>
-                    <p className="text-base text-muted-foreground/70 mt-2">Messages and images will appear here when received</p>
-                  </div>
-                ) : (
-                  messages.map((msg) => (
-                    <Card key={msg.id} className="bg-card shadow-lg hover:shadow-xl transition-all duration-300 border-border/50">
-                      <CardContent className="p-8">
-                        <div className="flex items-start justify-between mb-6">
-                          <div className="flex items-center gap-3">
-                            {msg.type === 'image' ? (
-                              <Badge variant="secondary" className="text-base px-4 py-2">
-                                <ImageIcon className="h-5 w-5 mr-2" />
-                                Image
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-base px-4 py-2">
-                                <MessageSquare className="h-5 w-5 mr-2" />
-                                Text Message
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="text-sm text-muted-foreground font-mono bg-muted px-3 py-1.5 rounded-md">
-                            {formatTime(msg.timestamp)}
-                          </span>
-                        </div>
-                        
+    const messageText = prompt.trim();
+    
+    // Send message to WebSocket server (server will echo it back)
+    wsRef.current.send(messageText);
+    
+    // Clear input
+    setPrompt('');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-white p-4 pt-12">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="border-2 border-black mb-4 p-3 bg-white">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h1 className="text-3xl font-black uppercase tracking-tighter mb-1 text-black">
+                WebSocket Monitor
+              </h1>
+              <p className="text-sm font-bold text-black uppercase">
+                Real-time message stream
+              </p>
+            </div>
+            <div className={`border-2 border-black px-4 py-2 flex items-center gap-2 font-black text-sm uppercase ${
+              isConnected ? 'bg-black text-white' : 'bg-white text-black'
+            }`}>
+              {isConnected ? (
+                <>
+                  <Wifi className="h-4 w-4" />
+                  <span>Connected</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-4 w-4" />
+                  <span>Disconnected</span>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {/* Stats */}
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            <div className="border-2 border-black px-3 py-1.5 bg-black text-white font-bold text-xs uppercase">
+              <Activity className="inline-block h-3 w-3 mr-1.5" />
+              {messages.length} Total
+            </div>
+            <div className="border-2 border-black px-3 py-1.5 bg-white text-black font-bold text-xs uppercase">
+              <MessageSquare className="inline-block h-3 w-3 mr-1.5" />
+              {messages.filter(m => m.type === 'text').length} Text
+            </div>
+            <div className="border-2 border-black px-3 py-1.5 bg-white text-black font-bold text-xs uppercase">
+              <ImageIcon className="inline-block h-3 w-3 mr-1.5" />
+              {messages.filter(m => m.type === 'image').length} Images
+            </div>
+          </div>
+        </div>
+
+        {/* Messages Container */}
+        <div className="border-2 border-black bg-white">
+          <div 
+            ref={scrollContainerRef}
+            className="h-[calc(100vh-280px)] min-h-[500px] overflow-y-auto p-4"
+          >
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full py-20">
+                <div className="border-2 border-black p-6 mb-4">
+                  <MessageSquare className="h-12 w-12 text-black" />
+                </div>
+                <p className="text-xl font-black uppercase text-black mb-2">
+                  Waiting for messages
+                </p>
+                <p className="text-sm font-bold text-black uppercase">
+                  No messages received yet
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {messages.map((msg) => (
+                  <div 
+                    key={msg.id} 
+                    className="border-2 border-black bg-white p-4"
+                  >
+                    {/* Message Header */}
+                    <div className="flex items-start justify-between mb-3 pb-2 border-b-2 border-black">
+                      <div className="flex items-center gap-2">
                         {msg.type === 'image' ? (
-                          <div className="flex flex-col items-center gap-4">
-                            <div className="w-full max-w-6xl overflow-hidden rounded-xl border-2 border-border bg-muted/30 p-6 shadow-inner">
-                              <img 
-                                src={msg.content} 
-                                alt="Received image" 
-                                className="max-w-full max-h-[800px] mx-auto rounded-lg shadow-2xl object-contain"
-                                onError={(e) => {
-                                  console.error('Image load error:', e);
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            </div>
+                          <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
+                            <ImageIcon className="inline-block h-3 w-3 mr-1" />
+                            Image
                           </div>
                         ) : (
-                          <div className="bg-muted/50 rounded-xl p-8 border border-border">
-                            <pre className="text-2xl font-mono text-foreground whitespace-pre-wrap break-words leading-relaxed">
-                              {msg.content}
-                            </pre>
+                          <div className="border-2 border-black px-2 py-1 bg-white text-black font-black text-xs uppercase">
+                            <MessageSquare className="inline-block h-3 w-3 mr-1" />
+                            Text
                           </div>
                         )}
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
+                      </div>
+                      <div className="border-2 border-black px-2 py-1 bg-black text-white font-mono font-bold text-xs">
+                        {formatTime(msg.timestamp)}
+                      </div>
+                    </div>
+                    
+                    {/* Message Content */}
+                    {msg.type === 'image' ? (
+                      <div className="border-2 border-black p-2 bg-white">
+                        <img 
+                          src={msg.content} 
+                          alt="Received image" 
+                          className="max-w-full max-h-[600px] mx-auto object-contain"
+                          onError={(e) => {
+                            console.error('Image load error:', e);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="border-2 border-black p-4 bg-white">
+                        <pre className="text-xl font-mono text-black whitespace-pre-wrap break-words leading-relaxed font-bold">
+                          {msg.content}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+            )}
+          </div>
+        </div>
+
+        {/* Input Section */}
+        <div className="border-2 border-black mt-4 p-3 bg-white">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message... (end with ? for AI response)"
+              className="flex-1 border-2 border-black px-4 py-2 font-mono text-sm bg-white text-black placeholder-black/50 focus:outline-none focus:bg-black focus:text-white uppercase"
+              disabled={!isConnected}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!isConnected || !prompt.trim()}
+              className={`border-2 border-black px-6 py-2 font-black text-sm uppercase flex items-center gap-2 ${
+                isConnected && prompt.trim()
+                  ? 'bg-black text-white hover:bg-white hover:text-black'
+                  : 'bg-white text-black opacity-50 cursor-not-allowed'
+              } transition-colors`}
+            >
+              <Send className="h-4 w-4" />
+              Send
+            </button>
+          </div>
+          <p className="text-xs text-black/70 mt-2 font-bold uppercase">
+            {isConnected ? 'Connected - Messages ending with ? will trigger AI response' : 'Disconnected - Cannot send messages'}
+          </p>
+        </div>
       </div>
     </main>
   );
