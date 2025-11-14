@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, Send } from 'lucide-react';
-import OpenAI from 'openai';
 
 interface Message {
   id: string;
@@ -15,19 +14,9 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [prompt, setPrompt] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const messageIdRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const openaiRef = useRef<OpenAI | null>(null);
-
-  // Initialize OpenAI client only in browser
-  if (typeof window !== 'undefined' && !openaiRef.current) {
-    openaiRef.current = new OpenAI({
-      apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true, // Required for browser usage
-    });
-  }
 
   useEffect(() => {
     // Connect to production WebSocket server
@@ -136,70 +125,18 @@ export default function Home() {
     });
   };
 
-  const sendMessage = async () => {
-    if (!prompt.trim() || isLoading) {
+  const sendMessage = () => {
+    if (!prompt.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       return;
     }
 
     const messageText = prompt.trim();
     
-    // Add user message to UI immediately
-    const userMessage: Message = {
-      id: `msg_${messageIdRef.current++}`,
-      type: 'text',
-      content: messageText,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev.slice(-99), userMessage]);
+    // Send message to WebSocket server (server will process with OpenAI)
+    wsRef.current.send(messageText);
     
     // Clear input
     setPrompt('');
-    setIsLoading(true);
-
-    try {
-      if (!openaiRef.current) {
-        throw new Error('OpenAI client not initialized. Please set NEXT_PUBLIC_OPENAI_API_KEY environment variable.');
-      }
-
-      // Call OpenAI API directly
-      const completion = await openaiRef.current.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful assistant. Respond concisely and clearly.',
-          },
-          {
-            role: 'user',
-            content: messageText,
-          },
-        ],
-        max_tokens: 150,
-        temperature: 0.7,
-      });
-
-      const aiResponse = completion.choices[0]?.message?.content;
-      if (aiResponse) {
-        const aiMessage: Message = {
-          id: `msg_${messageIdRef.current++}`,
-          type: 'text',
-          content: `AI: ${aiResponse}`,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev.slice(-99), aiMessage]);
-      }
-    } catch (error) {
-      console.error('OpenAI API error:', error);
-      const errorMessage: Message = {
-        id: `msg_${messageIdRef.current++}`,
-        type: 'text',
-        content: `Error: Failed to get AI response. ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev.slice(-99), errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -339,23 +276,23 @@ export default function Home() {
               onKeyPress={handleKeyPress}
               placeholder="Type your message and press Enter..."
               className="flex-1 border-2 border-black px-4 py-2 font-mono text-sm bg-white text-black placeholder-black/50 focus:outline-none focus:bg-black focus:text-white uppercase"
-              disabled={isLoading}
+              disabled={!isConnected}
             />
             <button
               onClick={sendMessage}
-              disabled={isLoading || !prompt.trim()}
+              disabled={!isConnected || !prompt.trim()}
               className={`border-2 border-black px-6 py-2 font-black text-sm uppercase flex items-center gap-2 ${
-                !isLoading && prompt.trim()
+                isConnected && prompt.trim()
                   ? 'bg-black text-white hover:bg-white hover:text-black'
                   : 'bg-white text-black opacity-50 cursor-not-allowed'
               } transition-colors`}
             >
               <Send className="h-4 w-4" />
-              {isLoading ? 'Sending...' : 'Send'}
+              Send
             </button>
           </div>
           <p className="text-xs text-black/70 mt-2 font-bold uppercase">
-            {isLoading ? 'Processing with OpenAI GPT-4o-mini...' : 'Send messages directly to OpenAI API'}
+            {isConnected ? 'Connected - Messages sent to server, AI responses for questions (?)' : 'Disconnected - Cannot send messages'}
           </p>
         </div>
       </div>
