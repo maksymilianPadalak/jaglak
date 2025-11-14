@@ -4,6 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import { WebSocket, WebSocketServer } from 'ws';
 import chatRoutes from './routes/chatRoutes';
+import { analyzeImage } from './services/chatService';
 
 const app = express();
 app.use(cors());
@@ -29,12 +30,17 @@ wss.on('connection', (ws: WebSocket) => {
 
       if (isImage) {
         const base64Image = data.toString('base64');
+        const imageDataUrl = `data:image/jpeg;base64,${base64Image}`;
+        
+        console.log(`Received image (${data.length} bytes)`);
+
+        // Send image immediately with loading state
         const imageMessage = JSON.stringify({
           type: 'image',
-          data: `data:image/jpeg;base64,${base64Image}`,
+          data: imageDataUrl,
+          aiResponse: null,
+          isLoading: true,
         });
-
-        console.log(`Received image (${data.length} bytes)`);
 
         clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN && client !== ws) {
@@ -42,20 +48,57 @@ wss.on('connection', (ws: WebSocket) => {
           }
         });
 
+        // Analyze image with GPT Vision asynchronously
+        analyzeImage(imageDataUrl)
+          .then((aiResponse) => {
+            const updatedMessage = JSON.stringify({
+              type: 'image',
+              data: imageDataUrl,
+              aiResponse,
+              isLoading: false,
+            });
+
+            clients.forEach((client) => {
+              if (client.readyState === WebSocket.OPEN && client !== ws) {
+                client.send(updatedMessage);
+              }
+            });
+          })
+          .catch((error) => {
+            console.error('Error analyzing image:', error);
+            const errorMessage = JSON.stringify({
+              type: 'image',
+              data: imageDataUrl,
+              aiResponse: `Error: ${error instanceof Error ? error.message : 'Failed to analyze image'}`,
+              isLoading: false,
+            });
+
+            clients.forEach((client) => {
+              if (client.readyState === WebSocket.OPEN && client !== ws) {
+                client.send(errorMessage);
+              }
+            });
+          });
+
         return;
       }
 
       const text = data.toString();
       console.log(`Received message: ${text}`);
 
-      try {
+    try {
         const parsed = JSON.parse(text);
         if (parsed.text && parsed.text.length > 1000) {
           const base64Match = parsed.text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
           if (base64Match) {
+            const imageDataUrl = base64Match[0];
+            
+            // Send image immediately with loading state
             const imageMessage = JSON.stringify({
               type: 'image',
-              data: base64Match[0],
+              data: imageDataUrl,
+              aiResponse: null,
+              isLoading: true,
             });
 
             clients.forEach((client) => {
@@ -63,6 +106,39 @@ wss.on('connection', (ws: WebSocket) => {
                 client.send(imageMessage);
               }
             });
+
+            // Analyze image with GPT Vision asynchronously
+            analyzeImage(imageDataUrl)
+              .then((aiResponse) => {
+                const updatedMessage = JSON.stringify({
+                  type: 'image',
+                  data: imageDataUrl,
+                  aiResponse,
+                  isLoading: false,
+                });
+
+                clients.forEach((client) => {
+                  if (client.readyState === WebSocket.OPEN && client !== ws) {
+                    client.send(updatedMessage);
+                  }
+                });
+              })
+              .catch((error) => {
+                console.error('Error analyzing image:', error);
+                const errorMessage = JSON.stringify({
+                  type: 'image',
+                  data: imageDataUrl,
+                  aiResponse: `Error: ${error instanceof Error ? error.message : 'Failed to analyze image'}`,
+                  isLoading: false,
+                });
+
+                clients.forEach((client) => {
+                  if (client.readyState === WebSocket.OPEN && client !== ws) {
+                    client.send(errorMessage);
+                  }
+                });
+              });
+
             return;
           }
         }

@@ -9,6 +9,8 @@ interface Message {
   type: 'text' | 'image';
   content: string;
   timestamp: Date;
+  aiResponse?: string | null;
+  isLoading?: boolean;
 }
 
 export default function Home() {
@@ -38,14 +40,34 @@ export default function Home() {
         const data = JSON.parse(event.data);
         
         if (data.type === 'image' && data.data) {
-          // Handle image message
-          const message: Message = {
-            id: `msg_${messageIdRef.current++}`,
-            type: 'image',
-            content: data.data,
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev.slice(-99), message]); // Keep last 100 messages
+          // Handle image message - update existing message if same image, or create new one
+          setMessages((prev) => {
+            const existingIndex = prev.findIndex(
+              (msg) => msg.type === 'image' && msg.content === data.data
+            );
+            
+            if (existingIndex !== -1) {
+              // Update existing message with AI response
+              const updated = [...prev];
+              updated[existingIndex] = {
+                ...updated[existingIndex],
+                aiResponse: data.aiResponse ?? null,
+                isLoading: data.isLoading ?? false,
+              };
+              return updated;
+            } else {
+              // Create new message
+              const message: Message = {
+                id: `msg_${messageIdRef.current++}`,
+                type: 'image',
+                content: data.data,
+                timestamp: new Date(),
+                aiResponse: data.aiResponse ?? null,
+                isLoading: data.isLoading ?? false,
+              };
+              return [...prev.slice(-99), message]; // Keep last 100 messages
+            }
+          });
         } else if (data.type === 'text' && data.text) {
           // Handle text message
           const message: Message = {
@@ -229,16 +251,54 @@ export default function Home() {
                     
                     {/* Message Content */}
                     {msg.type === 'image' ? (
-                      <div className="border-2 border-black p-2 bg-white">
-                        <img 
-                          src={msg.content} 
-                          alt="Received image" 
-                          className="max-w-full max-h-[600px] mx-auto object-contain"
-                          onError={(e) => {
-                            console.error('Image load error:', e);
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
+                      <div className="space-y-3">
+                        <div className="border-2 border-black p-2 bg-white">
+                          <img 
+                            src={msg.content} 
+                            alt="Received image" 
+                            className="max-w-full max-h-[600px] mx-auto object-contain"
+                            onError={(e) => {
+                              console.error('Image load error:', e);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                        
+                        {/* AI Response Section */}
+                        <div className="border-2 border-black bg-white p-4">
+                          <div className="flex items-center gap-2 mb-2 pb-2 border-b-2 border-black">
+                            <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
+                              AI Analysis
+                            </div>
+                          </div>
+                          
+                          {msg.isLoading ? (
+                            <div className="flex items-center gap-4 py-6">
+                              <div className="relative w-12 h-12 border-4 border-black">
+                                <div className="absolute inset-0 border-4 border-black border-t-transparent animate-spin-brutal"></div>
+                                <div className="absolute inset-2 border-2 border-black border-r-transparent animate-spin-brutal" style={{ animationDirection: 'reverse', animationDuration: '0.6s' }}></div>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <span className="text-base font-black uppercase text-black">
+                                  Analyzing image...
+                                </span>
+                                <span className="text-xs font-bold uppercase text-black opacity-60">
+                                  GPT Vision processing
+                                </span>
+                              </div>
+                            </div>
+                          ) : msg.aiResponse ? (
+                            <div className="border-2 border-black p-3 bg-black text-white">
+                              <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
+                                {msg.aiResponse}
+                              </pre>
+                            </div>
+                          ) : (
+                            <div className="text-sm font-bold uppercase text-black opacity-50">
+                              No analysis available
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <div className="border-2 border-black p-4 bg-white">

@@ -125,3 +125,17 @@
 * {
   box-sizing: border-box;
 }
+
+/* Custom spinner animation */
+@keyframes spin-brutal {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-brutal {
+  animation: spin-brutal 0.8s linear infinite;
+}
