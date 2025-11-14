@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, Send } from 'lucide-react';
+import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 
 interface Message {
   id: string;
@@ -13,7 +14,6 @@ interface Message {
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const [prompt, setPrompt] = useState('');
   const wsRef = useRef<WebSocket | null>(null);
   const messageIdRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -125,27 +125,6 @@ export default function Home() {
     });
   };
 
-  const sendMessage = () => {
-    if (!prompt.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      return;
-    }
-
-    const messageText = prompt.trim();
-    
-    // Send message to WebSocket server (server will process with OpenAI)
-    wsRef.current.send(messageText);
-    
-    // Clear input
-    setPrompt('');
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
   return (
     <main className="min-h-screen bg-white p-4 pt-12">
       <div className="max-w-6xl mx-auto">
@@ -160,20 +139,29 @@ export default function Home() {
                 Real-time message stream
               </p>
             </div>
-            <div className={`border-2 border-black px-4 py-2 flex items-center gap-2 font-black text-sm uppercase ${
-              isConnected ? 'bg-black text-white' : 'bg-white text-black'
-            }`}>
-              {isConnected ? (
-                <>
-                  <Wifi className="h-4 w-4" />
-                  <span>Connected</span>
-                </>
-              ) : (
-                <>
-                  <WifiOff className="h-4 w-4" />
-                  <span>Disconnected</span>
-                </>
-              )}
+            <div className="flex items-center gap-2">
+              <Link 
+                href="/chat"
+                className="border-2 border-black px-4 py-2 font-black text-sm uppercase flex items-center gap-2 hover:bg-black hover:text-white transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+                AI Chat
+              </Link>
+              <div className={`border-2 border-black px-4 py-2 flex items-center gap-2 font-black text-sm uppercase ${
+                isConnected ? 'bg-black text-white' : 'bg-white text-black'
+              }`}>
+                {isConnected ? (
+                  <>
+                    <Wifi className="h-4 w-4" />
+                    <span>Connected</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="h-4 w-4" />
+                    <span>Disconnected</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           
@@ -264,36 +252,6 @@ export default function Home() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Input Section */}
-        <div className="border-2 border-black mt-4 p-3 bg-white">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message and press Enter..."
-              className="flex-1 border-2 border-black px-4 py-2 font-mono text-sm bg-white text-black placeholder-black/50 focus:outline-none focus:bg-black focus:text-white uppercase"
-              disabled={!isConnected}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!isConnected || !prompt.trim()}
-              className={`border-2 border-black px-6 py-2 font-black text-sm uppercase flex items-center gap-2 ${
-                isConnected && prompt.trim()
-                  ? 'bg-black text-white hover:bg-white hover:text-black'
-                  : 'bg-white text-black opacity-50 cursor-not-allowed'
-              } transition-colors`}
-            >
-              <Send className="h-4 w-4" />
-              Send
-            </button>
-          </div>
-          <p className="text-xs text-black/70 mt-2 font-bold uppercase">
-            {isConnected ? 'Connected - Messages broadcast to all clients' : 'Disconnected - Cannot send messages'}
-          </p>
         </div>
       </div>
     </main>

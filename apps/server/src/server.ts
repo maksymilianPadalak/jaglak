@@ -1,81 +1,81 @@
+import 'dotenv/config';
 import http from 'http';
 import express from 'express';
+import cors from 'cors';
 import { WebSocket, WebSocketServer } from 'ws';
+import chatRoutes from './routes/chatRoutes';
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+app.use('/api', chatRoutes);
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-// Store connected clients
 const clients = new Set<WebSocket>();
 
 wss.on('connection', (ws: WebSocket) => {
   console.log('Client connected');
   clients.add(ws);
 
-  // Handle incoming messages from client
   ws.on('message', (data: Buffer) => {
     try {
-      // Check if message is binary (image) by checking magic bytes
-      const isImage = data.length > 2 && (
-        (data[0] === 0xFF && data[1] === 0xD8 && data[2] === 0xFF) || // JPEG
-        (data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4E && data[3] === 0x47) || // PNG
-        (data[0] === 0x47 && data[1] === 0x49 && data[2] === 0x46) // GIF
-      );
+      const isImage =
+        data.length > 2 &&
+        ((data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff) ||
+          (data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4e && data[3] === 0x47) ||
+          (data[0] === 0x47 && data[1] === 0x49 && data[2] === 0x46));
 
       if (isImage) {
-        // Convert binary image to base64
         const base64Image = data.toString('base64');
-        const message = JSON.stringify({ 
-          type: 'image', 
-          data: `data:image/jpeg;base64,${base64Image}` 
+        const imageMessage = JSON.stringify({
+          type: 'image',
+          data: `data:image/jpeg;base64,${base64Image}`,
         });
-        
+
         console.log(`Received image (${data.length} bytes)`);
-        
-        // Broadcast image to all OTHER connected clients (excluding sender)
+
         clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN && client !== ws) {
-            client.send(message);
+            client.send(imageMessage);
           }
         });
-      } else {
-        // Handle as text message
-        const text = data.toString();
-        console.log(`Received message: ${text}`);
-        
-        // Try to parse as JSON to check if it's already formatted
-        try {
-          const parsed = JSON.parse(text);
-          if (parsed.text && parsed.text.length > 1000) {
-            // Likely an image sent as text (base64 or corrupted)
-            // Try to extract base64 data
-            const base64Match = parsed.text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
-            if (base64Match) {
-              const message = JSON.stringify({ 
-                type: 'image', 
-                data: base64Match[0] 
-              });
-              clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN && client !== ws) {
-                  client.send(message);
-                }
-              });
-              return;
-            }
-          }
-        } catch {
-          // Not JSON, continue as normal text
-        }
-        
-        // Broadcast text message to all connected clients (including sender for echo)
-        const message = JSON.stringify({ type: 'text', text });
-        clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(message);
-          }
-        });
+
+        return;
       }
+
+      const text = data.toString();
+      console.log(`Received message: ${text}`);
+
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.text && parsed.text.length > 1000) {
+          const base64Match = parsed.text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
+          if (base64Match) {
+            const imageMessage = JSON.stringify({
+              type: 'image',
+              data: base64Match[0],
+            });
+
+            clients.forEach((client) => {
+              if (client.readyState === WebSocket.OPEN && client !== ws) {
+                client.send(imageMessage);
+              }
+            });
+            return;
+          }
+        }
+      } catch {
+        // ignore invalid JSON
+      }
+
+      const textMessage = JSON.stringify({ type: 'text', text });
+      clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(textMessage);
+        }
+      });
     } catch (error) {
       console.error('Error processing message:', error);
     }
@@ -95,4 +95,5 @@ wss.on('connection', (ws: WebSocket) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`WebSocket server running on ws://localhost:${PORT}`);
+  console.log(`HTTP API server running on http://localhost:${PORT}`);
 });
