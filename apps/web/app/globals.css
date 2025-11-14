@@ -120,3 +120,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Brutalist minimalistic styling */
+* {
+  box-sizing: border-box;
+}
