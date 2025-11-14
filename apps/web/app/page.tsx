@@ -1,11 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity } from 'lucide-react';
 
 interface Message {
   id: string;
   type: 'text' | 'image';
   content: string;
+  timestamp: Date;
 }
 
 export default function Home() {
@@ -39,16 +44,18 @@ export default function Home() {
             id: `msg_${messageIdRef.current++}`,
             type: 'image',
             content: data.data,
+            timestamp: new Date(),
           };
-          setMessages((prev) => [...prev.slice(-49), message]); // Keep last 50 messages
+          setMessages((prev) => [...prev.slice(-99), message]); // Keep last 100 messages
         } else if (data.type === 'text' && data.text) {
           // Handle text message
           const message: Message = {
             id: `msg_${messageIdRef.current++}`,
             type: 'text',
             content: data.text,
+            timestamp: new Date(),
           };
-          setMessages((prev) => [...prev.slice(-49), message]);
+          setMessages((prev) => [...prev.slice(-99), message]);
         } else if (data.text) {
           // Legacy format - check if it's an image in text format
           const text = data.text;
@@ -60,8 +67,9 @@ export default function Home() {
                 id: `msg_${messageIdRef.current++}`,
                 type: 'image',
                 content: base64Match[0],
+                timestamp: new Date(),
               };
-              setMessages((prev) => [...prev.slice(-49), message]);
+              setMessages((prev) => [...prev.slice(-99), message]);
               return;
             }
           }
@@ -71,8 +79,9 @@ export default function Home() {
             id: `msg_${messageIdRef.current++}`,
             type: 'text',
             content: text,
+            timestamp: new Date(),
           };
-          setMessages((prev) => [...prev.slice(-49), message]);
+          setMessages((prev) => [...prev.slice(-99), message]);
         }
       } catch (error) {
         console.error('Error parsing message:', error);
@@ -93,54 +102,143 @@ export default function Home() {
     };
   }, []);
 
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      // Find the ScrollArea viewport element
+      const viewport = document.querySelector('[data-slot="scroll-area-viewport"]') as HTMLElement;
+      if (viewport) {
+        setTimeout(() => {
+          viewport.scrollTo({
+            top: viewport.scrollHeight,
+            behavior: 'smooth',
+          });
+        }, 100);
+      }
+    }
+  }, [messages]);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-          WebSocket Stream
-        </h1>
-
-        <div className={`p-4 rounded-lg mb-6 text-center ${
-          isConnected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {isConnected ? 'Connected' : 'Disconnected'}
-        </div>
-
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 max-h-96 overflow-y-auto">
-          <div className="text-sm font-semibold text-gray-800 mb-4">
-            Messages ({messages.length}):
-          </div>
-          <div className="space-y-2">
-            {messages.length === 0 ? (
-              <div className="text-gray-500 text-center py-8">
-                Waiting for messages...
+    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <Card className="bg-card/95 backdrop-blur-xl shadow-2xl border-border/50">
+          <CardHeader className="space-y-4 pb-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="space-y-2">
+                <CardTitle className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                  WebSocket Monitor
+                </CardTitle>
+                <CardDescription className="text-lg">
+                  Real-time message and image streaming dashboard
+                </CardDescription>
               </div>
-            ) : (
-              messages.map((msg) => (
-                <div key={msg.id} className="bg-white p-2 rounded border">
-                  {msg.type === 'image' ? (
-                    <div className="flex flex-col items-center">
-                      <img 
-                        src={msg.content} 
-                        alt="Received image" 
-                        className="max-w-full max-h-64 rounded border"
-                        onError={(e) => {
-                          console.error('Image load error:', e);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <span className="text-xs text-gray-500 mt-1">Image</span>
+              <Badge 
+                variant={isConnected ? 'default' : 'destructive'}
+                className="text-base px-5 py-2.5 flex items-center gap-2 h-auto"
+              >
+                {isConnected ? (
+                  <>
+                    <Wifi className="h-5 w-5" />
+                    <span className="font-semibold">Connected</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="h-5 w-5" />
+                    <span className="font-semibold">Disconnected</span>
+                  </>
+                )}
+              </Badge>
+            </div>
+            
+            <div className="flex items-center gap-4 flex-wrap">
+              <Badge variant="secondary" className="text-base px-4 py-2 flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                {messages.length} Total
+              </Badge>
+              <Badge variant="outline" className="text-base px-4 py-2 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                {messages.filter(m => m.type === 'text').length} Text
+              </Badge>
+              <Badge variant="outline" className="text-base px-4 py-2 flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                {messages.filter(m => m.type === 'image').length} Images
+              </Badge>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            <ScrollArea className="h-[calc(100vh-320px)] min-h-[700px] w-full rounded-lg">
+              <div className="space-y-6 pr-4">
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full py-32">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-purple-500/20 blur-3xl rounded-full"></div>
+                      <MessageSquare className="h-24 w-24 text-muted-foreground relative z-10" />
                     </div>
-                  ) : (
-                    <div className="text-gray-700 font-mono text-sm break-words">
-                      {msg.content}
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+                    <p className="text-2xl text-muted-foreground font-semibold mt-8">Waiting for messages...</p>
+                    <p className="text-base text-muted-foreground/70 mt-2">Messages and images will appear here when received</p>
+                  </div>
+                ) : (
+                  messages.map((msg) => (
+                    <Card key={msg.id} className="bg-card shadow-lg hover:shadow-xl transition-all duration-300 border-border/50">
+                      <CardContent className="p-8">
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-center gap-3">
+                            {msg.type === 'image' ? (
+                              <Badge variant="secondary" className="text-base px-4 py-2">
+                                <ImageIcon className="h-5 w-5 mr-2" />
+                                Image
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-base px-4 py-2">
+                                <MessageSquare className="h-5 w-5 mr-2" />
+                                Text Message
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-sm text-muted-foreground font-mono bg-muted px-3 py-1.5 rounded-md">
+                            {formatTime(msg.timestamp)}
+                          </span>
+                        </div>
+                        
+                        {msg.type === 'image' ? (
+                          <div className="flex flex-col items-center gap-4">
+                            <div className="w-full max-w-6xl overflow-hidden rounded-xl border-2 border-border bg-muted/30 p-6 shadow-inner">
+                              <img 
+                                src={msg.content} 
+                                alt="Received image" 
+                                className="max-w-full max-h-[800px] mx-auto rounded-lg shadow-2xl object-contain"
+                                onError={(e) => {
+                                  console.error('Image load error:', e);
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-muted/50 rounded-xl p-8 border border-border">
+                            <pre className="text-2xl font-mono text-foreground whitespace-pre-wrap break-words leading-relaxed">
+                              {msg.content}
+                            </pre>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
