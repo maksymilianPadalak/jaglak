@@ -83,8 +83,8 @@ wss.on('connection', (ws: WebSocket) => {
           }
         });
 
-        // Process text message with OpenAI if it's a question (ends with ?)
-        if (text.trim().endsWith('?') && text.trim().length > 5) {
+        // Always process text message with OpenAI
+        if (text.trim().length > 0) {
           processTextWithAI(text).catch((error) => {
             console.error('Error processing text with AI:', error);
           });
