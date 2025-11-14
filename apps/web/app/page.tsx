@@ -8,8 +8,12 @@ export default function Home() {
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    // Hardcoded for testing
-    const WS_URL = 'ws://localhost:3000';
+    // Connect to production WebSocket server
+    const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 
+      (typeof window !== 'undefined' && window.location.protocol === 'https:' 
+        ? 'wss://jaglak.onrender.com' 
+        : 'ws://jaglak.onrender.com');
+    
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 

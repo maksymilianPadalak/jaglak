@@ -13,6 +13,24 @@ wss.on('connection', (ws: WebSocket) => {
   console.log('Client connected');
   clients.add(ws);
 
+  // Handle incoming messages from client
+  ws.on('message', (data: Buffer) => {
+    try {
+      const text = data.toString();
+      console.log(`Received message: ${text}`);
+      
+      // Broadcast message to all OTHER connected clients (excluding sender)
+      const message = JSON.stringify({ text });
+      clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN && client !== ws) {
+          client.send(message);
+        }
+      });
+    } catch (error) {
+      console.error('Error processing message:', error);
+    }
+  });
+
   ws.on('close', () => {
     console.log('Client disconnected');
     clients.delete(ws);
