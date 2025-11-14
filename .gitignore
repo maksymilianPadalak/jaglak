@@ -7,9 +7,12 @@ npm-debug.log
 dist/
 *.log
 .next/
+.turbo/
 apps/web/.next/
 apps/web/.env.local
 apps/server/dist/
 apps/server/node_modules/
 apps/web/node_modules/
+apps/server/pnpm-lock.yaml
+apps/web/pnpm-lock.yaml
 
