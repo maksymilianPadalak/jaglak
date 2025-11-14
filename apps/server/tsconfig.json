@@ -13,10 +13,6 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "@jaglak/shared-types": ["../../packages/shared-types"]
-    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

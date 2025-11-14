@@ -1,17 +1,14 @@
 {
-  "name": "@jaglak/server",
-  "version": "0.0.0",
+  "name": "server",
+  "version": "1.0.0",
   "private": true,
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "tsx watch src/server.ts",
-    "type-check": "tsc --noEmit",
-    "lint": "eslint ."
+    "dev": "tsx watch src/server.ts"
   },
   "dependencies": {
-    "@jaglak/shared-types": "workspace:*",
     "express": "^4.18.2",
     "ws": "^8.16.0"
   },

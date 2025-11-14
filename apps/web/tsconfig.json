@@ -19,8 +19,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@jaglak/shared-types": ["../../packages/shared-types"]
+      "@/*": ["./*"]
     }
   },
   "include": [
@@ -33,3 +32,4 @@
   ],
   "exclude": ["node_modules"]
 }
+

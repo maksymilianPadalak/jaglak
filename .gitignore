@@ -7,11 +7,9 @@ npm-debug.log
 dist/
 *.log
 .next/
-.turbo/
 apps/web/.next/
 apps/web/.env.local
-
-# Cursor (keep rules, ignore other files)
-.cursor/*
-!.cursor/rules/
+apps/server/dist/
+apps/server/node_modules/
+apps/web/node_modules/
 

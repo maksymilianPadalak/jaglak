@@ -1,6 +1,6 @@
 {
-  "name": "@jaglak/web",
-  "version": "0.1.0",
+  "name": "web",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@jaglak/shared-types": "workspace:*",
     "next": "16.0.3",
     "react": "19.2.0",
     "react-dom": "19.2.0"
