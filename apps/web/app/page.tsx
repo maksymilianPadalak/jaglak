@@ -51,8 +51,8 @@ export default function Home() {
               const updated = [...prev];
               updated[existingIndex] = {
                 ...updated[existingIndex],
-                aiResponse: data.aiResponse ?? null,
-                isLoading: data.isLoading ?? false,
+                aiResponse: data.aiResponse !== undefined ? data.aiResponse : updated[existingIndex].aiResponse,
+                isLoading: data.isLoading !== undefined ? data.isLoading : updated[existingIndex].isLoading,
               };
               return updated;
             } else {

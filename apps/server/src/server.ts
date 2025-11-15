@@ -16,8 +16,45 @@ const wss = new WebSocketServer({ server });
 
 const clients = new Set<WebSocket>();
 
+const broadcastMessage = (message: string, exclude?: WebSocket) => {
+  console.log('[WS] Broadcasting message to clients');
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN && client !== exclude) {
+      client.send(message);
+    }
+  });
+};
+
+const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => {
+  console.log('[Analysis] Starting GPT analysis pipeline');
+  try {
+    const aiResponse = await analyzeImage(imageDataUrl);
+    console.log('[Analysis] GPT returned response, length:', aiResponse?.length || 0);
+
+    const updatedMessage = JSON.stringify({
+      type: 'image',
+      data: imageDataUrl,
+      aiResponse,
+      isLoading: false,
+    });
+
+    broadcastMessage(updatedMessage, sender);
+  } catch (error) {
+    console.error('[Analysis] Error analyzing image:', error);
+    const errorAnalysis = `Error: ${error instanceof Error ? error.message : 'Failed to analyze image'}`;
+    const errorMessage = JSON.stringify({
+      type: 'image',
+      data: imageDataUrl,
+      aiResponse: errorAnalysis,
+      isLoading: false,
+    });
+
+    broadcastMessage(errorMessage, sender);
+  }
+};
+
 wss.on('connection', (ws: WebSocket) => {
-  console.log('Client connected');
+  console.log('[WS] Client connected');
   clients.add(ws);
 
   ws.on('message', (data: Buffer) => {
@@ -32,7 +69,7 @@ wss.on('connection', (ws: WebSocket) => {
         const base64Image = data.toString('base64');
         const imageDataUrl = `data:image/jpeg;base64,${base64Image}`;
         
-        console.log(`Received image (${data.length} bytes)`);
+        console.log(`[WS] Received image (${data.length} bytes)`);
 
         // Send image immediately with loading state
         const imageMessage = JSON.stringify({
@@ -42,49 +79,16 @@ wss.on('connection', (ws: WebSocket) => {
           isLoading: true,
         });
 
-        clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN && client !== ws) {
-            client.send(imageMessage);
-          }
+        broadcastMessage(imageMessage, ws);
+        processImageAnalysis(imageDataUrl, ws).catch((error) => {
+          console.error('[WS] Unhandled error in processImageAnalysis:', error);
         });
 
-        // Analyze image with GPT Vision asynchronously
-        analyzeImage(imageDataUrl)
-          .then((aiResponse) => {
-            const updatedMessage = JSON.stringify({
-              type: 'image',
-              data: imageDataUrl,
-              aiResponse,
-              isLoading: false,
-            });
-
-            clients.forEach((client) => {
-              if (client.readyState === WebSocket.OPEN && client !== ws) {
-                client.send(updatedMessage);
-              }
-            });
-          })
-          .catch((error) => {
-            console.error('Error analyzing image:', error);
-            const errorMessage = JSON.stringify({
-              type: 'image',
-              data: imageDataUrl,
-              aiResponse: `Error: ${error instanceof Error ? error.message : 'Failed to analyze image'}`,
-              isLoading: false,
-            });
-
-            clients.forEach((client) => {
-              if (client.readyState === WebSocket.OPEN && client !== ws) {
-                client.send(errorMessage);
-              }
-            });
-          });
-
         return;
-      }
+  }
 
       const text = data.toString();
-      console.log(`Received message: ${text}`);
+      console.log('[WS] Received text message');
 
     try {
         const parsed = JSON.parse(text);
@@ -101,46 +105,13 @@ wss.on('connection', (ws: WebSocket) => {
               isLoading: true,
             });
 
-            clients.forEach((client) => {
-              if (client.readyState === WebSocket.OPEN && client !== ws) {
-                client.send(imageMessage);
-              }
+            broadcastMessage(imageMessage, ws);
+            processImageAnalysis(imageDataUrl, ws).catch((error) => {
+              console.error('[WS] Unhandled error in processImageAnalysis:', error);
             });
 
-            // Analyze image with GPT Vision asynchronously
-            analyzeImage(imageDataUrl)
-              .then((aiResponse) => {
-                const updatedMessage = JSON.stringify({
-                  type: 'image',
-                  data: imageDataUrl,
-                  aiResponse,
-                  isLoading: false,
-                });
-
-                clients.forEach((client) => {
-                  if (client.readyState === WebSocket.OPEN && client !== ws) {
-                    client.send(updatedMessage);
-                  }
-                });
-              })
-              .catch((error) => {
-                console.error('Error analyzing image:', error);
-                const errorMessage = JSON.stringify({
-                  type: 'image',
-                  data: imageDataUrl,
-                  aiResponse: `Error: ${error instanceof Error ? error.message : 'Failed to analyze image'}`,
-                  isLoading: false,
-                });
-
-                clients.forEach((client) => {
-                  if (client.readyState === WebSocket.OPEN && client !== ws) {
-                    client.send(errorMessage);
-                  }
-                });
-              });
-
             return;
-          }
+  }
         }
       } catch {
         // ignore invalid JSON
@@ -150,20 +121,20 @@ wss.on('connection', (ws: WebSocket) => {
       clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(textMessage);
-        }
+  }
       });
     } catch (error) {
-      console.error('Error processing message:', error);
-    }
+      console.error('[WS] Error processing message:', error);
+}
   });
 
   ws.on('close', () => {
-    console.log('Client disconnected');
+    console.log('[WS] Client disconnected');
     clients.delete(ws);
   });
 
   ws.on('error', (error: Error) => {
-    console.error('WebSocket error:', error);
+    console.error('[WS] WebSocket error:', error);
     clients.delete(ws);
   });
 });
