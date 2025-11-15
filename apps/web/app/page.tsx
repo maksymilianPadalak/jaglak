@@ -1,22 +1,21 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, MessageCircle, Music, Zap } from 'lucide-react';
+import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, MessageCircle, Music } from 'lucide-react';
 import Link from 'next/link';
 
 interface Message {
   id: string;
-  type: 'text' | 'image' | 'audio' | 'action';
+  type: 'text' | 'image' | 'audio';
   content: string;
   timestamp: Date;
   aiResponse?: string | null;
   transcription?: string | null;
   responseAudio?: string | null;
   isLoading?: boolean;
-  action?: string;
 }
 
-type FilterType = 'all' | 'text' | 'image' | 'audio' | 'action';
+type FilterType = 'all' | 'text' | 'image' | 'audio';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -108,16 +107,6 @@ export default function Home() {
               return [...prev.slice(-99), message]; // Keep last 100 messages
             }
           });
-        } else if (data.action && !data.type) {
-          // Handle action message (e.g., { action: 'pickUp' })
-          const message: Message = {
-            id: `msg_${messageIdRef.current++}`,
-            type: 'action',
-            content: JSON.stringify({ action: data.action }),
-            timestamp: new Date(),
-            action: data.action,
-          };
-          setMessages((prev) => [...prev.slice(-99), message]);
         } else if (data.type === 'text' && data.text) {
           // Handle text message
           const message: Message = {
@@ -318,17 +307,6 @@ export default function Home() {
               <Music className="inline-block h-3 w-3 mr-1.5" />
               {messages.filter(m => m.type === 'audio').length} Audio
             </button>
-            <button
-              onClick={() => setFilter('action')}
-              className={`border-2 border-black px-3 py-1.5 font-bold text-xs uppercase transition-colors cursor-pointer ${
-                filter === 'action'
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black hover:bg-black hover:text-white'
-              }`}
-            >
-              <Zap className="inline-block h-3 w-3 mr-1.5" />
-              {messages.filter(m => m.type === 'action').length} Actions
-            </button>
           </div>
         </div>
 
@@ -347,10 +325,8 @@ export default function Home() {
                     <MessageSquare className="h-12 w-12 text-black" />
                   ) : filter === 'image' ? (
                     <ImageIcon className="h-12 w-12 text-black" />
-                  ) : filter === 'audio' ? (
-                    <Music className="h-12 w-12 text-black" />
                   ) : (
-                    <Zap className="h-12 w-12 text-black" />
+                    <Music className="h-12 w-12 text-black" />
                   )}
                 </div>
                 <p className="text-xl font-black uppercase text-black mb-2">
@@ -379,11 +355,6 @@ export default function Home() {
                           <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
                             <Music className="inline-block h-3 w-3 mr-1" />
                             Audio
-                          </div>
-                        ) : msg.type === 'action' ? (
-                          <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
-                            <Zap className="inline-block h-3 w-3 mr-1" />
-                            Action
                           </div>
                         ) : (
                           <div className="border-2 border-black px-2 py-1 bg-white text-black font-black text-xs uppercase">
@@ -517,58 +488,11 @@ export default function Home() {
                           )}
                         </div>
                       </div>
-                    ) : msg.type === 'action' ? (
-                      <div className="border-2 border-black p-4 bg-white">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <div className="border-2 border-black bg-black text-white px-2 py-1 text-xs font-black uppercase">
-                              ✓ Action
-                            </div>
-                            <div className="border-2 border-black bg-white text-black px-2 py-1 text-xs font-black uppercase">
-                              {msg.action}
-                            </div>
-                          </div>
-                          <div className="border-2 border-black bg-black text-white p-3">
-                            <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
-                              {msg.content}
-                            </pre>
-                          </div>
-                        </div>
-                      </div>
                     ) : (
                       <div className="border-2 border-black p-4 bg-white">
-                        {(() => {
-                          // Check if message is an action JSON
-                          try {
-                            const parsed = JSON.parse(msg.content);
-                            if (parsed.action) {
-                              return (
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="border-2 border-black bg-black text-white px-2 py-1 text-xs font-black uppercase">
-                                      ✓ Action
-                                    </div>
-                                    <div className="border-2 border-black bg-white text-black px-2 py-1 text-xs font-black uppercase">
-                                      {parsed.action}
-                                    </div>
-                                  </div>
-                                  <div className="border-2 border-black bg-black text-white p-3">
-                                    <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
-                                      {msg.content}
-                                    </pre>
-                                  </div>
-                                </div>
-                              );
-                            }
-                          } catch {
-                            // Not JSON, display normally
-                          }
-                          return (
-                            <pre className="text-xl font-mono text-black whitespace-pre-wrap break-words leading-relaxed font-bold">
-                              {msg.content}
-                            </pre>
-                          );
-                        })()}
+                        <pre className="text-xl font-mono text-black whitespace-pre-wrap break-words leading-relaxed font-bold">
+                          {msg.content}
+                        </pre>
                       </div>
                     )}
                   </div>

@@ -64,9 +64,9 @@ const broadcastAction = (action: string, exclude?: WebSocket) => {
   }
   
   canBroadcastAction = false;
-  const actionMessage = JSON.stringify({ action });
-  broadcastMessage(actionMessage, exclude);
-  return true;
+  // Send action as text message format
+  const actionText = JSON.stringify({ action });
+  return broadcastTextMessage(actionText, exclude);
 };
 
 const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => {
