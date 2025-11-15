@@ -9,6 +9,7 @@
     "dev": "tsx watch src/server.ts"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.24.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",

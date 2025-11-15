@@ -47,6 +47,16 @@ export default function Navigation() {
           Send Email
         </Link>
         <Link
+          href="/text-to-speech"
+          className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
+            isActive('/text-to-speech')
+              ? 'bg-black text-white'
+              : 'bg-white text-black hover:bg-black hover:text-white'
+          }`}
+        >
+          Text to Speech
+        </Link>
+        <Link
           href="/patients"
           className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
             isActive('/patients')

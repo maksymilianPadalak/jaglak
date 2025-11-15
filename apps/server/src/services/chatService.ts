@@ -84,7 +84,6 @@ export async function analyzeImage(imageBase64: string): Promise<ImageAnalysisRe
           ],
         },
       ],
-      max_output_tokens: 300,
     });
 
     // Parse the output_text as JSON and validate with Zod schema
