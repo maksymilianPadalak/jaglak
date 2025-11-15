@@ -39,10 +39,7 @@ export const postChatImage = async (req: Request, res: Response) => {
     
     console.log('[API] POST /api/chat/image - Calling analyzeImage');
     const analysisResult = await analyzeImage(imageDataUrl);
-    console.log('[API] POST /api/chat/image - Analysis complete:', {
-      description: analysisResult.description?.substring(0, 100),
-      action: analysisResult.action,
-    });
+    console.log('[API] POST /api/chat/image - Analysis complete:', JSON.stringify(analysisResult, null, 2));
 
     res.json(analysisResult);
   } catch (error) {

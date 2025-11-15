@@ -4,12 +4,21 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, ArrowLeft, Image as ImageIcon, X } from 'lucide-react';
 import Link from 'next/link';
 
+interface CreditCard {
+  numbers: string;
+  expirationDate: string;
+  cvc: string;
+  fullName: string;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
   imageUrl?: string;
+  creditCard?: CreditCard;
+  action?: string;
 }
 
 export default function ChatPage() {
@@ -159,13 +168,15 @@ export default function ChatPage() {
       const data = await response.json();
       
       // Format the response nicely
-      const formattedContent = `Description: ${data.description}\n\nAction: ${data.action}`;
+      let formattedContent = `Description: ${data.description}\n\nAction: ${data.action}`;
       
       const aiMessage: Message = {
         id: `msg_${messageIdRef.current++}`,
         role: 'assistant',
         content: formattedContent,
         timestamp: new Date(),
+        creditCard: data.creditCard,
+        action: data.action,
       };
 
       setMessages((prev) => [...prev, aiMessage]);
@@ -256,6 +267,31 @@ export default function ChatPage() {
                     <div className="text-xl font-mono whitespace-pre-wrap break-words leading-relaxed font-bold">
                       {msg.content}
                     </div>
+                    {msg.creditCard && (
+                      <div className="mt-4 border-2 border-current p-4 bg-current/10">
+                        <div className="font-black text-xs uppercase mb-3 pb-2 border-b-2 border-current">
+                          Credit Card Details
+                        </div>
+                        <div className="space-y-2 text-sm font-mono">
+                          <div>
+                            <span className="font-bold uppercase opacity-70">Numbers:</span>{' '}
+                            <span className="font-black">{msg.creditCard.numbers}</span>
+                          </div>
+                          <div>
+                            <span className="font-bold uppercase opacity-70">Expiration:</span>{' '}
+                            <span className="font-black">{msg.creditCard.expirationDate}</span>
+                          </div>
+                          <div>
+                            <span className="font-bold uppercase opacity-70">CVC:</span>{' '}
+                            <span className="font-black">{msg.creditCard.cvc}</span>
+                          </div>
+                          <div>
+                            <span className="font-bold uppercase opacity-70">Full Name:</span>{' '}
+                            <span className="font-black">{msg.creditCard.fullName}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
                 {isLoading && (
