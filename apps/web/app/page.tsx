@@ -10,6 +10,7 @@ interface Message {
   content: string;
   timestamp: Date;
   aiResponse?: string | null;
+  transcription?: string | null;
   isLoading?: boolean;
 }
 
@@ -69,14 +70,36 @@ export default function Home() {
             }
           });
         } else if (data.type === 'audio' && data.data) {
-          // Handle audio message
-          const message: Message = {
-            id: `msg_${messageIdRef.current++}`,
-            type: 'audio',
-            content: data.data,
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev.slice(-99), message]);
+          // Handle audio message - update existing message if same audio, or create new one
+          setMessages((prev) => {
+            const existingIndex = prev.findIndex(
+              (msg) => msg.type === 'audio' && msg.content === data.data && msg.isLoading
+            );
+            
+            if (existingIndex !== -1) {
+              // Update existing message with response
+              const updated = [...prev];
+              updated[existingIndex] = {
+                ...updated[existingIndex],
+                isLoading: data.isLoading !== undefined ? data.isLoading : updated[existingIndex].isLoading,
+                transcription: data.transcription !== undefined ? data.transcription : updated[existingIndex].transcription,
+                aiResponse: data.aiResponse !== undefined ? data.aiResponse : updated[existingIndex].aiResponse,
+              };
+              return updated;
+            } else {
+              // Create new message (could be original or AI response)
+              const message: Message = {
+                id: `msg_${messageIdRef.current++}`,
+                type: 'audio',
+                content: data.data,
+                timestamp: new Date(),
+                isLoading: data.isLoading ?? false,
+                transcription: data.transcription ?? null,
+                aiResponse: data.aiResponse ?? null,
+              };
+              return [...prev.slice(-99), message]; // Keep last 100 messages
+            }
+          });
         } else if (data.type === 'text' && data.text) {
           // Handle text message
           const message: Message = {
@@ -269,11 +292,60 @@ export default function Home() {
                     
                     {/* Message Content */}
                     {msg.type === 'audio' ? (
-                      <div className="border-2 border-black p-4 bg-white">
-                        <audio controls className="w-full">
-                          <source src={msg.content} type="audio/mpeg" />
-                          Your browser does not support the audio element.
-                        </audio>
+                      <div className="space-y-3">
+                        {msg.isLoading ? (
+                          <div className="flex flex-col items-center justify-center gap-4 p-8 border-2 border-black bg-white">
+                            <div className="relative w-20 h-20 border-4 border-black">
+                              <div className="absolute inset-0 border-4 border-black border-t-transparent animate-spin-brutal"></div>
+                              <div className="absolute inset-2 border-2 border-black border-r-transparent animate-spin-brutal" style={{ animationDirection: 'reverse', animationDuration: '0.6s' }}></div>
+                            </div>
+                            <div className="flex flex-col gap-1 text-center">
+                              <span className="text-lg font-black uppercase text-black">
+                                Processing audio...
+                              </span>
+                              <span className="text-sm font-bold uppercase text-black opacity-60">
+                                Transcribing → Generating Response → Creating Audio
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="border-2 border-black p-4 bg-white">
+                              <audio controls className="w-full">
+                                <source src={msg.content} type="audio/mpeg" />
+                                Your browser does not support the audio element.
+                              </audio>
+                            </div>
+                            {msg.transcription && (
+                              <div className="border-2 border-black bg-white p-4">
+                                <div className="flex items-center gap-2 mb-2 pb-2 border-b-2 border-black">
+                                  <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
+                                    Transcription
+                                  </div>
+                                </div>
+                                <div className="border-2 border-black p-3 bg-black text-white">
+                                  <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
+                                    {msg.transcription}
+                                  </pre>
+                                </div>
+                              </div>
+                            )}
+                            {msg.aiResponse && (
+                              <div className="border-2 border-black bg-white p-4">
+                                <div className="flex items-center gap-2 mb-2 pb-2 border-b-2 border-black">
+                                  <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
+                                    AI Response
+                                  </div>
+                                </div>
+                                <div className="border-2 border-black p-3 bg-black text-white">
+                                  <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
+                                    {msg.aiResponse}
+                                  </pre>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     ) : msg.type === 'image' ? (
                       <div className="space-y-3">

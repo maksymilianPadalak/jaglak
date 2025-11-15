@@ -5,6 +5,7 @@ import cors from 'cors';
 import { WebSocket, WebSocketServer } from 'ws';
 import chatRoutes from './routes/chatRoutes';
 import { analyzeImage, ImageAnalysisResult } from './services/chatService';
+import { transcribeAudio } from './services/whisperService';
 
 const app = express();
 
@@ -76,6 +77,60 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
   }
 };
 
+const processAudioResponse = async (audioBuffer: Buffer, sender: WebSocket, originalDataUrl?: string) => {
+  console.log('[Audio] Starting audio processing pipeline');
+  try {
+    const result = await transcribeAudio({
+      audioBuffer,
+      responseFormat: 'text',
+    });
+
+    console.log('[Audio] Processing complete:', {
+      transcriptionLength: result.transcription.length,
+      aiResponseLength: result.aiResponse.length,
+      audioSize: result.audioBuffer.length,
+    });
+
+    // Convert AI response audio buffer to base64 data URL
+    const audioBase64 = result.audioBuffer.toString('base64');
+    const responseAudioDataUrl = `data:audio/mpeg;base64,${audioBase64}`;
+
+    // Update original message to remove loading state (keep original audio)
+    if (originalDataUrl) {
+      const updatedMessage = JSON.stringify({
+        type: 'audio',
+        data: originalDataUrl,
+        isLoading: false,
+      });
+      broadcastMessage(updatedMessage, sender);
+    }
+
+    // Send AI response as a new audio message
+    const responseMessage = JSON.stringify({
+      type: 'audio',
+      data: responseAudioDataUrl,
+      transcription: result.transcription,
+      aiResponse: result.aiResponse,
+      isLoading: false,
+    });
+
+    broadcastMessage(responseMessage, sender);
+  } catch (error) {
+    console.error('[Audio] Error processing audio:', error);
+    
+    // Update original message to show error
+    if (originalDataUrl) {
+      const errorMessage = JSON.stringify({
+        type: 'audio',
+        data: originalDataUrl,
+        error: error instanceof Error ? error.message : 'Failed to process audio',
+        isLoading: false,
+      });
+      broadcastMessage(errorMessage, sender);
+    }
+  }
+};
+
 wss.on('connection', (ws: WebSocket) => {
   console.log('[WS] Client connected');
   clients.add(ws);
@@ -125,13 +180,20 @@ wss.on('connection', (ws: WebSocket) => {
 
         console.log(`[WS] Received MP3 audio (${data.length} bytes)`);
 
-        // Send audio immediately
+        // Send audio immediately with loading state
         const audioMessage = JSON.stringify({
           type: 'audio',
           data: audioDataUrl,
+          isLoading: true,
         });
 
         broadcastMessage(audioMessage, ws);
+        
+        // Process audio and generate AI response
+        processAudioResponse(data, ws, audioDataUrl).catch((error) => {
+          console.error('[WS] Unhandled error in processAudioResponse:', error);
+        });
+
         return;
       }
 
@@ -166,14 +228,23 @@ wss.on('connection', (ws: WebSocket) => {
           const audioMatch = parsed.text.match(/data:audio\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
           if (audioMatch) {
             const audioDataUrl = audioMatch[0];
+            const base64Data = audioDataUrl.replace(/^data:audio\/[^;]+;base64,/, '');
+            const audioBuffer = Buffer.from(base64Data, 'base64');
             
-            // Send audio immediately
+            // Send audio immediately with loading state
             const audioMessage = JSON.stringify({
               type: 'audio',
               data: audioDataUrl,
+              isLoading: true,
             });
 
             broadcastMessage(audioMessage, ws);
+            
+            // Process audio and generate AI response
+            processAudioResponse(audioBuffer, ws, audioDataUrl).catch((error) => {
+              console.error('[WS] Unhandled error in processAudioResponse:', error);
+            });
+            
             return;
           }
         }
