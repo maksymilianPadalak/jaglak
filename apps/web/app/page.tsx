@@ -633,33 +633,6 @@ export default function Home() {
                                     </div>
                                   </div>
                                 </div>
-
-                                {/* Credit Card Info */}
-                                {parsedResponse.creditCard && (
-                                  <div className="border-2 border-black p-3 bg-white">
-                                    <div className="text-xs font-black uppercase text-black mb-3 opacity-70">
-                                      Credit Card Detected
-                                    </div>
-                                    <div className="space-y-2">
-                                      <div className="flex justify-between items-center border-b border-black pb-2">
-                                        <span className="text-xs font-bold uppercase text-black opacity-70">Numbers:</span>
-                                        <span className="text-sm font-black uppercase font-mono text-black">{parsedResponse.creditCard.numbers}</span>
-                                      </div>
-                                      <div className="flex justify-between items-center border-b border-black pb-2">
-                                        <span className="text-xs font-bold uppercase text-black opacity-70">Expiration:</span>
-                                        <span className="text-sm font-black uppercase font-mono text-black">{parsedResponse.creditCard.expirationDate}</span>
-                                      </div>
-                                      <div className="flex justify-between items-center border-b border-black pb-2">
-                                        <span className="text-xs font-bold uppercase text-black opacity-70">CVC:</span>
-                                        <span className="text-sm font-black uppercase font-mono text-black">{parsedResponse.creditCard.cvc}</span>
-                                      </div>
-                                      <div className="flex justify-between items-center">
-                                        <span className="text-xs font-bold uppercase text-black opacity-70">Full Name:</span>
-                                        <span className="text-sm font-black uppercase font-mono text-black">{parsedResponse.creditCard.fullName}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
                               </div>
                             ) : (
                               <div className="text-sm font-bold uppercase text-black opacity-50">
