@@ -51,7 +51,7 @@ export default function PatientCard({ patient }: PatientCardProps) {
             <img
               src={patient.patientImage}
               alt={patient.name}
-              className="w-full h-48 object-cover"
+              className="w-full h-96 object-cover object-top"
               onError={(e) => {
                 e.currentTarget.src = 'https://via.placeholder.com/400x400?text=Patient+Image';
               }}
@@ -61,7 +61,7 @@ export default function PatientCard({ patient }: PatientCardProps) {
             <img
               src={patient.robotImage}
               alt={`Robot ${patient.robotId}`}
-              className="w-full h-48 object-cover"
+              className="w-full h-96 object-cover object-top"
               onError={(e) => {
                 e.currentTarget.src = 'https://via.placeholder.com/400x400?text=Robot+Image';
               }}

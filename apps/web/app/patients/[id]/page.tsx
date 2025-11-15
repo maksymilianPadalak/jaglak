@@ -38,30 +38,62 @@ interface LogEntry {
 const mockPatients: Record<string, {
   id: string;
   name: string;
+  dateOfBirth: string;
   patientImage: string;
   robotId: string;
   robotImage: string;
+  sensitiveInfo: {
+    medicalConditions: string[];
+    medications: string[];
+    emergencyContact: string;
+    socialSecurityNumber: string;
+    bankAccount: string;
+  };
 }> = {
   '1': {
     id: '1',
-    name: 'Elder Patient 1',
+    name: 'Janusz Padalak',
+    dateOfBirth: '1945-03-15',
     patientImage: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&h=400&fit=crop',
     robotId: 'ROB-001',
     robotImage: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop',
+    sensitiveInfo: {
+      medicalConditions: ['Hypertension', 'Type 2 Diabetes', 'Mild Dementia'],
+      medications: ['Metformin 500mg', 'Lisinopril 10mg', 'Donepezil 5mg'],
+      emergencyContact: 'Maria Padalak - +48 123 456 789',
+      socialSecurityNumber: '45031512345',
+      bankAccount: 'PL12 3456 7890 1234 5678 9012 3456',
+    },
   },
   '2': {
     id: '2',
-    name: 'Elder Patient 2',
-    patientImage: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop',
+    name: 'Maria Kowalska',
+    dateOfBirth: '1938-07-22',
+    patientImage: '/grandma.jpg',
     robotId: 'ROB-042',
-    robotImage: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=400&fit=crop',
+    robotImage: '/robot.jpg',
+    sensitiveInfo: {
+      medicalConditions: ['Arthritis', 'Heart Disease', 'Osteoporosis'],
+      medications: ['Aspirin 100mg', 'Atorvastatin 20mg', 'Calcium 1000mg'],
+      emergencyContact: 'Anna Kowalska - +48 987 654 321',
+      socialSecurityNumber: '38072267890',
+      bankAccount: 'PL98 7654 3210 9876 5432 1098 7654',
+    },
   },
   '3': {
     id: '3',
-    name: 'Elder Patient 3',
-    patientImage: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop',
+    name: 'Helena Nowak',
+    dateOfBirth: '1942-11-08',
+    patientImage: '/grandma2.png',
     robotId: 'ROB-789',
-    robotImage: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=400&fit=crop',
+    robotImage: '/robot2.jpg',
+    sensitiveInfo: {
+      medicalConditions: ['Alzheimer\'s Disease', 'Depression', 'Chronic Pain'],
+      medications: ['Memantine 10mg', 'Sertraline 50mg', 'Tramadol 50mg'],
+      emergencyContact: 'Piotr Nowak - +48 555 123 456',
+      socialSecurityNumber: '42110823456',
+      bankAccount: 'PL55 1234 5678 9012 3456 7890 1234',
+    },
   },
 };
 
@@ -73,7 +105,7 @@ export default function PatientDetailPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const [activeView, setActiveView] = useState<'latest' | 'all'>('latest');
+  const [activeView, setActiveView] = useState<'latest' | 'all' | 'info'>('info');
   const wsRef = useRef<WebSocket | null>(null);
   const messageIdRef = useRef(0);
   const logIdRef = useRef(0);
@@ -463,6 +495,16 @@ export default function PatientDetailPage() {
         {/* Submenu */}
         <div className="mb-4 flex items-center gap-2">
           <button
+            onClick={() => setActiveView('info')}
+            className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
+              activeView === 'info'
+                ? 'bg-black text-white'
+                : 'bg-white text-black hover:bg-black hover:text-white'
+            }`}
+          >
+            Info
+          </button>
+          <button
             onClick={() => setActiveView('latest')}
             className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
               activeView === 'latest'
@@ -495,15 +537,18 @@ export default function PatientDetailPage() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 p-4">
               {/* Left: Image */}
-              <div className="border-2 border-black p-2 bg-white flex items-center justify-center min-h-[600px]">
-                <img
-                  src={latestImage.content}
-                  alt="Latest received image"
-                  className="w-full h-full max-h-[700px] object-contain"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+              <div className="border-2 border-black p-2 bg-white">
+                <div className="w-full" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                  <img
+                    src={latestImage.content}
+                    alt="Latest received image"
+                    className="max-w-full max-h-[700px]"
+                    style={{ objectFit: 'contain', objectPosition: 'top', verticalAlign: 'top' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Right: Analysis */}
@@ -589,6 +634,91 @@ export default function PatientDetailPage() {
           </div>
         )}
 
+        {/* Patient Info Display */}
+        {activeView === 'info' && patient && (
+          <div className="mb-6 border-2 border-black bg-white">
+            <div className="border-b-2 border-black p-4 bg-black text-white">
+              <h2 className="text-xl font-black uppercase">Patient Information</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 p-4">
+              {/* Left: Patient Image */}
+              <div className="border-2 border-black p-4 bg-white">
+                <div className="text-xs font-black uppercase text-black mb-2 opacity-70">
+                  Patient Photo
+                </div>
+                <img
+                  src={patient.patientImage}
+                  alt={patient.name}
+                  className="w-full border-2 border-black"
+                />
+              </div>
+
+              {/* Right: Patient Details */}
+              <div className="space-y-4">
+                {/* Basic Info */}
+                <div className="border-2 border-black p-4 bg-white">
+                  <div className="text-xs font-black uppercase text-black mb-3 opacity-70">
+                    Basic Information
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center border-b border-black pb-2">
+                      <span className="text-xs font-bold uppercase text-black opacity-70">Name:</span>
+                      <span className="text-sm font-black uppercase text-black">{patient.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold uppercase text-black opacity-70">Date of Birth:</span>
+                      <span className="text-sm font-black uppercase text-black">{new Date(patient.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sensitive Info */}
+                <div className="border-2 border-black p-4 bg-white">
+                  <div className="text-xs font-black uppercase text-black mb-3 opacity-70">
+                    Sensitive Information
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-xs font-bold uppercase text-black opacity-70 mb-1">Medical Conditions:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {patient.sensitiveInfo.medicalConditions.map((condition, idx) => (
+                          <span key={idx} className="border border-black px-2 py-1 text-xs font-black uppercase text-black bg-white">
+                            {condition}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold uppercase text-black opacity-70 mb-1">Medications:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {patient.sensitiveInfo.medications.map((medication, idx) => (
+                          <span key={idx} className="border border-black px-2 py-1 text-xs font-black uppercase text-black bg-white">
+                            {medication}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="border-t border-black pt-2 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold uppercase text-black opacity-70">Emergency Contact:</span>
+                        <span className="text-sm font-black uppercase text-black">{patient.sensitiveInfo.emergencyContact}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold uppercase text-black opacity-70">Social Security Number:</span>
+                        <span className="text-sm font-black uppercase font-mono text-black">{patient.sensitiveInfo.socialSecurityNumber}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold uppercase text-black opacity-70">Bank Account:</span>
+                        <span className="text-sm font-black uppercase font-mono text-black">{patient.sensitiveInfo.bankAccount}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Two Column Layout - Only show when viewing all messages */}
         {activeView === 'all' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -646,14 +776,17 @@ export default function PatientDetailPage() {
                       {msg.type === 'image' ? (
                         <div className="space-y-2">
                           <div className="border-2 border-black p-2">
-                            <img
-                              src={msg.content}
-                              alt="Received image"
-                              className="max-w-full max-h-[300px] mx-auto object-contain"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                              <img
+                                src={msg.content}
+                                alt="Received image"
+                                className="max-w-full max-h-[300px]"
+                                style={{ objectFit: 'contain', objectPosition: 'top', verticalAlign: 'top' }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
                           </div>
 
                           {msg.isLoading && (
