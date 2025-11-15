@@ -21,6 +21,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [sendSuccess, setSendSuccess] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const messageIdRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -175,6 +176,16 @@ export default function Home() {
     return msg.type === filter;
   });
 
+  // Expose helper function for browser console to show success
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as typeof window & { showWSSuccess?: (message: string) => void }).showWSSuccess = (message: string) => {
+        setSendSuccess(message);
+        setTimeout(() => setSendSuccess(null), 3000);
+      };
+    }
+  }, []);
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollContainerRef.current && filteredMessages.length > 0) {
@@ -193,6 +204,18 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white p-4 pt-12">
       <div className="max-w-6xl mx-auto">
+        {/* Success Notification */}
+        {sendSuccess && (
+          <div className="fixed top-20 right-4 z-50 border-2 border-black bg-black text-white px-6 py-4 font-black text-sm uppercase shadow-lg animate-fade-in max-w-md">
+            <div className="flex items-center gap-3">
+              <div className="border-2 border-white w-6 h-6 flex items-center justify-center">
+                <span className="text-white text-lg leading-none">✓</span>
+              </div>
+              <div className="flex-1">{sendSuccess}</div>
+            </div>
+          </div>
+        )}
+        
         {/* Header */}
         <div className="border-2 border-black mb-4 p-3 bg-white">
           <div className="flex items-center justify-between flex-wrap gap-3">
@@ -227,6 +250,14 @@ export default function Home() {
                   </>
                 )}
               </div>
+            </div>
+          </div>
+          
+          {/* Send Instructions */}
+          <div className="mt-3 border-2 border-black bg-white p-3">
+            <div className="text-xs font-black uppercase text-black mb-1">Send Files via Browser Console</div>
+            <div className="text-xs font-bold text-black opacity-70">
+              Use the WebSocket script in console to send images/audio files
             </div>
           </div>
           
@@ -459,9 +490,38 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="border-2 border-black p-4 bg-white">
-                        <pre className="text-xl font-mono text-black whitespace-pre-wrap break-words leading-relaxed font-bold">
-                          {msg.content}
-                        </pre>
+                        {(() => {
+                          // Check if message is an action JSON
+                          try {
+                            const parsed = JSON.parse(msg.content);
+                            if (parsed.action) {
+                              return (
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="border-2 border-black bg-black text-white px-2 py-1 text-xs font-black uppercase">
+                                      ✓ Action
+                                    </div>
+                                    <div className="border-2 border-black bg-white text-black px-2 py-1 text-xs font-black uppercase">
+                                      {parsed.action}
+                                    </div>
+                                  </div>
+                                  <div className="border-2 border-black bg-black text-white p-3">
+                                    <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
+                                      {msg.content}
+                                    </pre>
+                                  </div>
+                                </div>
+                              );
+                            }
+                          } catch {
+                            // Not JSON, display normally
+                          }
+                          return (
+                            <pre className="text-xl font-mono text-black whitespace-pre-wrap break-words leading-relaxed font-bold">
+                              {msg.content}
+                            </pre>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

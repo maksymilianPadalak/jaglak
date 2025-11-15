@@ -60,7 +60,14 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
     });
 
     broadcastMessage(updatedMessage, sender);
-    } catch (error) {
+
+    // Send JSON with action as separate message
+    const actionMessage = JSON.stringify({
+      type: 'text',
+      text: JSON.stringify({ action: analysisResult.action }),
+    });
+    broadcastMessage(actionMessage, sender);
+  } catch (error) {
     console.error('[Analysis] Error analyzing image:', error);
     const errorAnalysis: ImageAnalysisResult = {
       description: `Error: ${error instanceof Error ? error.message : 'Failed to analyze image'}`,
@@ -74,6 +81,13 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
     });
 
     broadcastMessage(errorMessage, sender);
+
+    // Send error action as well
+    const errorActionMessage = JSON.stringify({
+      type: 'text',
+      text: JSON.stringify({ action: 'noAction' }),
+    });
+    broadcastMessage(errorActionMessage, sender);
   }
 };
 
