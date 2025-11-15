@@ -33,6 +33,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const clients = new Set<WebSocket>();
+let canBroadcastText = true; // Flag to control text message broadcasting
 
 const broadcastMessage = (message: string, exclude?: WebSocket) => {
   console.log('[WS] Broadcasting message to clients');
@@ -41,6 +42,18 @@ const broadcastMessage = (message: string, exclude?: WebSocket) => {
       client.send(message);
     }
   });
+};
+
+const broadcastTextMessage = (text: string, exclude?: WebSocket) => {
+  if (!canBroadcastText) {
+    console.log('[WS] Cannot broadcast text - waiting for action to complete');
+    return false;
+  }
+  
+  canBroadcastText = false;
+  const textMessage = JSON.stringify({ type: 'text', text });
+  broadcastMessage(textMessage, exclude);
+  return true;
 };
 
 const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => {
@@ -62,11 +75,7 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
     broadcastMessage(updatedMessage, sender);
 
     // Send JSON with action as separate message
-    const actionMessage = JSON.stringify({
-      type: 'text',
-      text: JSON.stringify({ action: analysisResult.action }),
-    });
-    broadcastMessage(actionMessage, sender);
+    broadcastTextMessage(JSON.stringify({ action: analysisResult.action }), sender);
   } catch (error) {
     console.error('[Analysis] Error analyzing image:', error);
     const errorAnalysis: ImageAnalysisResult = {
@@ -83,11 +92,7 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
     broadcastMessage(errorMessage, sender);
 
     // Send error action as well
-    const errorActionMessage = JSON.stringify({
-      type: 'text',
-      text: JSON.stringify({ action: 'noAction' }),
-    });
-    broadcastMessage(errorActionMessage, sender);
+    broadcastTextMessage(JSON.stringify({ action: 'noAction' }), sender);
   }
 };
 
@@ -123,11 +128,7 @@ const processAudioResponse = async (audioBuffer: Buffer, sender: WebSocket, orig
     }
 
     // Send "AUDIO KURWA - {transcription}" text message
-    const textMessage = JSON.stringify({ 
-      type: 'text', 
-      text: `AUDIO KURWA - ${result.transcription}` 
-    });
-    broadcastMessage(textMessage, sender);
+    broadcastTextMessage(`AUDIO KURWA - ${result.transcription}`, sender);
   } catch (error) {
     console.error('[Audio] Error processing audio:', error);
     
@@ -215,6 +216,14 @@ wss.on('connection', (ws: WebSocket) => {
 
     try {
         const parsed = JSON.parse(text);
+        
+        // Check if this is an "action done" message
+        if (parsed.actionDone === true || parsed.type === 'actionDone') {
+          console.log('[WS] Action done received - allowing next text broadcast');
+          canBroadcastText = true;
+          return;
+        }
+        
         if (parsed.text && parsed.text.length > 1000) {
           // Check for base64 image data
           const imageMatch = parsed.text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
@@ -265,12 +274,7 @@ wss.on('connection', (ws: WebSocket) => {
         // ignore invalid JSON
       }
 
-      const textMessage = JSON.stringify({ type: 'text', text });
-      clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(textMessage);
-  }
-      });
+      broadcastTextMessage(text);
     } catch (error) {
       console.error('[WS] Error processing message:', error);
 }
