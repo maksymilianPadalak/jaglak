@@ -59,7 +59,7 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
     });
 
     broadcastMessage(updatedMessage, sender);
-  } catch (error) {
+    } catch (error) {
     console.error('[Analysis] Error analyzing image:', error);
     const errorAnalysis: ImageAnalysisResult = {
       description: `Error: ${error instanceof Error ? error.message : 'Failed to analyze image'}`,
@@ -91,7 +91,7 @@ wss.on('connection', (ws: WebSocket) => {
       if (isImage) {
         const base64Image = data.toString('base64');
         const imageDataUrl = `data:image/jpeg;base64,${base64Image}`;
-        
+
         console.log(`[WS] Received image (${data.length} bytes)`);
 
         // Send image immediately with loading state
@@ -108,7 +108,7 @@ wss.on('connection', (ws: WebSocket) => {
         });
 
         return;
-  }
+}
 
       const text = data.toString();
       console.log('[WS] Received text message');
@@ -133,7 +133,7 @@ wss.on('connection', (ws: WebSocket) => {
               console.error('[WS] Unhandled error in processImageAnalysis:', error);
             });
 
-            return;
+    return;
   }
         }
       } catch {

