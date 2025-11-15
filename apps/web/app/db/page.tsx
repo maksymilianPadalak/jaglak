@@ -12,8 +12,6 @@ interface CreditCard {
   updatedAt: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
 export default function DbPage() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(false);
@@ -23,7 +21,7 @@ export default function DbPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/credit-cards`);
+      const response = await fetch('/api/credit-cards');
       if (!response.ok) {
         throw new Error('Failed to fetch credit cards');
       }
