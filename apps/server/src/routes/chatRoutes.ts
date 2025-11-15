@@ -3,6 +3,7 @@ import { healthCheck, postChatMessage, postChatImage } from '../controllers/chat
 import { sendEmailHandler } from '../controllers/emailController';
 import { postTextToSpeech, getVoicesList } from '../controllers/elevenLabsController';
 import { postTranscribeAudio } from '../controllers/whisperController';
+import { createTask, getTasks, updateTask } from '../controllers/taskController';
 
 const router: Router = Router();
 
@@ -13,6 +14,9 @@ router.post('/email/send', sendEmailHandler);
 router.post('/elevenlabs/tts', postTextToSpeech);
 router.get('/elevenlabs/voices', getVoicesList);
 router.post('/whisper/transcribe', postTranscribeAudio);
+router.post('/tasks', createTask);
+router.get('/tasks', getTasks);
+router.patch('/tasks/:id', updateTask);
 
 export default router;
 

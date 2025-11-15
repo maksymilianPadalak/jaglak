@@ -66,6 +66,16 @@ export default function Navigation() {
         >
           Patients
         </Link>
+        <Link
+          href="/db"
+          className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
+            isActive('/db')
+              ? 'bg-black text-white'
+              : 'bg-white text-black hover:bg-black hover:text-white'
+          }`}
+        >
+          DB
+        </Link>
       </nav>
     </header>
   );
