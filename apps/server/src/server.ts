@@ -58,13 +58,8 @@ const broadcastTextMessage = (text: string, exclude?: WebSocket) => {
 };
 
 const broadcastAction = (action: string, exclude?: WebSocket) => {
-  if (!canBroadcastAction) {
-    console.log('[WS] Cannot broadcast action - waiting for actionDone message');
-    return false;
-  }
-  
-  canBroadcastAction = false;
   // Send action wrapped as text message for Unreal Engine compatibility
+  // broadcastTextMessage will handle the flag check and reset
   const actionText = JSON.stringify({ action });
   return broadcastTextMessage(actionText, exclude);
 };
