@@ -1,15 +1,28 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, MessageCircle, Music } from 'lucide-react';
+import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, MessageCircle, Music, HandHeart, CheckCircle, CreditCard } from 'lucide-react';
 import Link from 'next/link';
+
+interface CreditCard {
+  numbers: string;
+  expirationDate: string;
+  cvc: string;
+  fullName: string;
+}
+
+interface AIResponse {
+  description: string;
+  action: string;
+  creditCard?: CreditCard;
+}
 
 interface Message {
   id: string;
   type: 'text' | 'image' | 'audio';
   content: string;
   timestamp: Date;
-  aiResponse?: string | null;
+  aiResponse?: string | AIResponse | null;
   transcription?: string | null;
   responseAudio?: string | null;
   isLoading?: boolean;
@@ -217,6 +230,28 @@ export default function Home() {
       minute: '2-digit',
       second: '2-digit'
     });
+  };
+
+  const getActionIcon = (action: string) => {
+    switch (action) {
+      case 'pickUp':
+        return <HandHeart className="h-5 w-5" />;
+      case 'transferMoney':
+        return <CreditCard className="h-5 w-5" />;
+      case 'noAction':
+      default:
+        return <CheckCircle className="h-5 w-5" />;
+    }
+  };
+
+  const parseAIResponse = (aiResponse: string | AIResponse | null | undefined): AIResponse | null => {
+    if (!aiResponse) return null;
+    if (typeof aiResponse === 'object') return aiResponse;
+    try {
+      return JSON.parse(aiResponse) as AIResponse;
+    } catch {
+      return null;
+    }
   };
 
   const filteredMessages = messages.filter((msg) => {
@@ -508,7 +543,7 @@ export default function Home() {
                               <div className="border-2 border-black p-3 bg-black text-white">
                                 <div className="text-xs font-black uppercase mb-2 opacity-70">AI Response</div>
                                 <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
-                                  {msg.aiResponse}
+                                  {typeof msg.aiResponse === 'string' ? msg.aiResponse : JSON.stringify(msg.aiResponse, null, 2)}
                                 </pre>
                               </div>
                               
@@ -572,17 +607,66 @@ export default function Home() {
                                 </span>
                               </div>
                             </div>
-                          ) : msg.aiResponse ? (
-                            <div className="border-2 border-black p-3 bg-black text-white">
-                              <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
-                                {msg.aiResponse}
-                              </pre>
-                            </div>
-                          ) : (
-                            <div className="text-sm font-bold uppercase text-black opacity-50">
-                              No analysis available
-                            </div>
-                          )}
+                          ) : (() => {
+                            const parsedResponse = parseAIResponse(msg.aiResponse);
+                            return parsedResponse ? (
+                              <div className="space-y-4">
+                                {/* Description */}
+                                <div className="border-2 border-black p-4 bg-white">
+                                  <div className="text-xs font-black uppercase text-black mb-3 border-b-2 border-black pb-2">
+                                    Description
+                                  </div>
+                                  <div className="text-sm font-mono text-black leading-relaxed">
+                                    {parsedResponse.description}
+                                  </div>
+                                </div>
+
+                                {/* Action */}
+                                <div className="border-2 border-black p-4 bg-white">
+                                  <div className="text-xs font-black uppercase text-black mb-3 border-b-2 border-black pb-2">
+                                    Action
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    {getActionIcon(parsedResponse.action)}
+                                    <div className="text-lg font-black uppercase font-mono text-black">
+                                      {parsedResponse.action}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Credit Card Info */}
+                                {parsedResponse.creditCard && (
+                                  <div className="border-2 border-black p-3 bg-white">
+                                    <div className="text-xs font-black uppercase text-black mb-3 opacity-70">
+                                      Credit Card Detected
+                                    </div>
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between items-center border-b border-black pb-2">
+                                        <span className="text-xs font-bold uppercase text-black opacity-70">Numbers:</span>
+                                        <span className="text-sm font-black uppercase font-mono text-black">{parsedResponse.creditCard.numbers}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center border-b border-black pb-2">
+                                        <span className="text-xs font-bold uppercase text-black opacity-70">Expiration:</span>
+                                        <span className="text-sm font-black uppercase font-mono text-black">{parsedResponse.creditCard.expirationDate}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center border-b border-black pb-2">
+                                        <span className="text-xs font-bold uppercase text-black opacity-70">CVC:</span>
+                                        <span className="text-sm font-black uppercase font-mono text-black">{parsedResponse.creditCard.cvc}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-xs font-bold uppercase text-black opacity-70">Full Name:</span>
+                                        <span className="text-sm font-black uppercase font-mono text-black">{parsedResponse.creditCard.fullName}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-sm font-bold uppercase text-black opacity-50">
+                                No analysis available
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     ) : (
