@@ -22,11 +22,47 @@ export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
   const [sendSuccess, setSendSuccess] = useState<string | null>(null);
+  const [show911Alert, setShow911Alert] = useState(false);
+  const [callDuration, setCallDuration] = useState(10);
   const wsRef = useRef<WebSocket | null>(null);
   const messageIdRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const callTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Function to check for pickUp action in text
+    const checkForPickUpAction = (text: string) => {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.action === 'pickUp') {
+          console.log('[Frontend] PickUp action detected - showing 112 call modal');
+          setCallDuration(0);
+          setShow911Alert(true);
+          
+          // Clear any existing timer
+          if (callTimerRef.current) {
+            clearInterval(callTimerRef.current);
+          }
+          
+          // Count up timer from 0 to 10
+          callTimerRef.current = setInterval(() => {
+            setCallDuration((prev) => {
+              if (prev >= 10) {
+                if (callTimerRef.current) {
+                  clearInterval(callTimerRef.current);
+                }
+                setShow911Alert(false);
+                return 10;
+              }
+              return prev + 1;
+            });
+          }, 1000);
+        }
+      } catch {
+        // Not JSON, ignore
+      }
+    };
+
     // Connect to production WebSocket server
     const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 
       (typeof window !== 'undefined' && window.location.protocol === 'https:' 
@@ -119,6 +155,9 @@ export default function Home() {
             timestamp: new Date(),
           };
           setMessages((prev) => [...prev.slice(-99), message]);
+          
+          // Check if this is a pickUp action
+          checkForPickUpAction(data.text);
         } else if (data.text) {
           // Legacy format - check if it's an image in text format
           const text = data.text;
@@ -137,7 +176,7 @@ export default function Home() {
             }
           }
           
-          // Regular text message
+          // Regular text message - also check for pickUp action
           const message: Message = {
             id: `msg_${messageIdRef.current++}`,
             type: 'text',
@@ -145,6 +184,9 @@ export default function Home() {
             timestamp: new Date(),
           };
           setMessages((prev) => [...prev.slice(-99), message]);
+          
+          // Check if this is a pickUp action
+          checkForPickUpAction(text);
         }
       } catch (error) {
         console.error('Error parsing message:', error);
@@ -162,6 +204,9 @@ export default function Home() {
 
     return () => {
       ws.close();
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current);
+      }
     };
   }, []);
 
@@ -219,6 +264,50 @@ export default function Home() {
           </div>
         )}
         
+        {/* 911 Call Modal */}
+        {show911Alert && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
+            <div className="border-4 border-black bg-white p-8 max-w-md w-full mx-4 relative">
+              {/* Phone Call Interface */}
+              <div className="text-center">
+                {/* Phone Icon */}
+                <div className="mb-6">
+                  <div className="w-24 h-24 mx-auto border-4 border-black rounded-full bg-red-600 flex items-center justify-center animate-pulse">
+                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Call Status */}
+                <h2 className="text-3xl font-black uppercase tracking-tighter mb-2 text-black">
+                  Calling 112
+                </h2>
+                <p className="text-lg font-bold uppercase text-black mb-6">
+                  Emergency Services
+                </p>
+
+                {/* Call Duration Timer */}
+                <div className="mb-6">
+                  <div className="border-4 border-black bg-black text-white p-8">
+                    <div className="text-center">
+                      <p className="text-xs font-black uppercase mb-2 opacity-70">
+                        Call Duration
+                      </p>
+                      <p className="text-6xl font-black">
+                        {callDuration}
+                      </p>
+                      <p className="text-xs font-black uppercase mt-2 opacity-70">
+                        {callDuration === 1 ? 'Second' : 'Seconds'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="border-2 border-black mb-4 p-3 bg-white">
           <div className="flex items-center justify-between flex-wrap gap-3">
