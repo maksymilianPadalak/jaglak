@@ -27,36 +27,6 @@ export default function Navigation() {
           Home
         </Link>
         <Link
-          href="/chat"
-          className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
-            isActive('/chat')
-              ? 'bg-black text-white'
-              : 'bg-white text-black hover:bg-black hover:text-white'
-          }`}
-        >
-          AI Chat
-        </Link>
-        <Link
-          href="/send-email"
-          className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
-            isActive('/send-email')
-              ? 'bg-black text-white'
-              : 'bg-white text-black hover:bg-black hover:text-white'
-          }`}
-        >
-          Send Email
-        </Link>
-        <Link
-          href="/audio"
-          className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
-            isActive('/audio')
-              ? 'bg-black text-white'
-              : 'bg-white text-black hover:bg-black hover:text-white'
-          }`}
-        >
-          Audio
-        </Link>
-        <Link
           href="/patients"
           className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
             isActive('/patients')
