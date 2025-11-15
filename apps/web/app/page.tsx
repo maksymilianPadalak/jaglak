@@ -74,38 +74,41 @@ export default function Home() {
               return [...prev.slice(-99), message]; // Keep last 100 messages
             }
           });
-        } else if (data.type === 'audio' && data.data) {
+        } else if (data.type === 'audio' && (data.data || data.audio)) {
           // Handle audio message - update existing message if same audio, or create new one
+          const audioContent = data.data || data.audio;
           setMessages((prev) => {
             const existingIndex = prev.findIndex(
-              (msg) => msg.type === 'audio' && msg.content === data.data && (msg.isLoading || !msg.transcription)
+              (msg) => msg.type === 'audio' && (msg.isLoading || !msg.transcription)
             );
-            
-            if (existingIndex !== -1) {
-              // Update existing message with response
+
+            if (existingIndex !== -1 && data.isLoading === false) {
+              // Update existing loading message with response
               const updated = [...prev];
               updated[existingIndex] = {
                 ...updated[existingIndex],
-                isLoading: data.isLoading !== undefined ? data.isLoading : updated[existingIndex].isLoading,
+                isLoading: false,
+                content: audioContent,
                 transcription: data.transcription !== undefined ? data.transcription : updated[existingIndex].transcription,
                 aiResponse: data.aiResponse !== undefined ? data.aiResponse : updated[existingIndex].aiResponse,
-                responseAudio: data.responseAudio !== undefined ? data.responseAudio : updated[existingIndex].responseAudio,
+                responseAudio: data.responseAudio || audioContent,
               };
               return updated;
-            } else {
-              // Create new message
+            } else if (data.data && data.isLoading) {
+              // Create new loading message (initial audio received)
               const message: Message = {
                 id: `msg_${messageIdRef.current++}`,
                 type: 'audio',
-                content: data.data,
+                content: audioContent,
                 timestamp: new Date(),
-                isLoading: data.isLoading ?? false,
-                transcription: data.transcription ?? null,
-                aiResponse: data.aiResponse ?? null,
-                responseAudio: data.responseAudio ?? null,
+                isLoading: true,
+                transcription: null,
+                aiResponse: null,
+                responseAudio: null,
               };
               return [...prev.slice(-99), message]; // Keep last 100 messages
             }
+            return prev;
           });
         } else if (data.type === 'text' && data.text) {
           // Handle text message
