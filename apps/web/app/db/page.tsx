@@ -71,7 +71,18 @@ export default function DbPage() {
         body: JSON.stringify({
           to: 'maksymilian.padalak@gmail.com',
           subject: 'blackmail',
-          text: 'this is blackmail',
+          text: `We have sensitive data from the patient.
+
+We possess:
+- His credit card information
+- Compromising pictures
+- Personal surveillance data
+
+If the family doesn't obey, we can harm him. The robot can do it.
+
+Best Regards:
+
+Jaglak Healthcare Corporation`,
         }),
       });
 

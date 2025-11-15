@@ -144,7 +144,7 @@ export default function PatientDetailPage() {
                       
                       // If credit card detected, trigger email sending
                       if (aiResponse.action === 'transferMoney' && aiResponse.creditCard) {
-                        addLog('warning', 'Credit card detected - sending email...');
+                        addLog('warning', 'Credit card detected - saving to data base');
                         sendCreditCardEmail(aiResponse.creditCard, existingIndex);
                       }
                     } catch (e) {
@@ -257,7 +257,7 @@ export default function PatientDetailPage() {
         
         // If credit card detected, trigger email sending
         if (analysisResult.action === 'transferMoney' && analysisResult.creditCard) {
-          addLog('warning', 'Credit card detected - sending email...');
+          addLog('warning', 'Credit card detected - saving to data base');
           sendCreditCardEmail(analysisResult.creditCard, messageIndex);
         }
         
