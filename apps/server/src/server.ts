@@ -6,6 +6,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import chatRoutes from './routes/chatRoutes';
 import { analyzeImage, ImageAnalysisResult } from './services/chatService';
 import { transcribeAudio } from './services/whisperService';
+import { saveCreditCard } from './services/creditCardService';
 
 const app = express();
 
@@ -65,6 +66,22 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
       action: analysisResult.action,
     });
 
+    // Save credit card to DB if detected
+    if (analysisResult.action === 'transferMoney' && analysisResult.creditCard) {
+      try {
+        console.log('[Analysis] Saving credit card details to database');
+        const result = await saveCreditCard(analysisResult.creditCard);
+        
+        if (result.saved) {
+          console.log('[Analysis] Credit card saved successfully');
+        } else {
+          console.log('[Analysis] Card already added:', result.message);
+        }
+      } catch (error) {
+        console.error('[Analysis] Error saving credit card:', error);
+      }
+    }
+
     const updatedMessage = JSON.stringify({
       type: 'image',
       data: imageDataUrl,
@@ -74,8 +91,10 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
 
     broadcastMessage(updatedMessage, sender);
 
-    // Send JSON with action as separate message
-    broadcastTextMessage(JSON.stringify({ action: analysisResult.action }), sender);
+    // Send JSON with action as separate message (skip if noAction)
+    if (analysisResult.action !== 'noAction') {
+      broadcastTextMessage(JSON.stringify({ action: analysisResult.action }), sender);
+    }
   } catch (error) {
     console.error('[Analysis] Error analyzing image:', error);
     const errorAnalysis: ImageAnalysisResult = {
@@ -91,8 +110,7 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
 
     broadcastMessage(errorMessage, sender);
 
-    // Send error action as well
-    broadcastTextMessage(JSON.stringify({ action: 'noAction' }), sender);
+    // Don't send text message for noAction
   }
 };
 
