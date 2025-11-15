@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, MessageCircle } from 'lucide-react';
+import { Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, MessageCircle, Music } from 'lucide-react';
 import Link from 'next/link';
 
 interface Message {
   id: string;
-  type: 'text' | 'image';
+  type: 'text' | 'image' | 'audio';
   content: string;
   timestamp: Date;
   aiResponse?: string | null;
@@ -68,6 +68,15 @@ export default function Home() {
               return [...prev.slice(-99), message]; // Keep last 100 messages
             }
           });
+        } else if (data.type === 'audio' && data.data) {
+          // Handle audio message
+          const message: Message = {
+            id: `msg_${messageIdRef.current++}`,
+            type: 'audio',
+            content: data.data,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev.slice(-99), message]);
         } else if (data.type === 'text' && data.text) {
           // Handle text message
           const message: Message = {
@@ -201,6 +210,10 @@ export default function Home() {
               <ImageIcon className="inline-block h-3 w-3 mr-1.5" />
               {messages.filter(m => m.type === 'image').length} Images
             </div>
+            <div className="border-2 border-black px-3 py-1.5 bg-white text-black font-bold text-xs uppercase">
+              <Music className="inline-block h-3 w-3 mr-1.5" />
+              {messages.filter(m => m.type === 'audio').length} Audio
+            </div>
           </div>
         </div>
 
@@ -237,6 +250,11 @@ export default function Home() {
                             <ImageIcon className="inline-block h-3 w-3 mr-1" />
                             Image
                           </div>
+                        ) : msg.type === 'audio' ? (
+                          <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
+                            <Music className="inline-block h-3 w-3 mr-1" />
+                            Audio
+                          </div>
                         ) : (
                           <div className="border-2 border-black px-2 py-1 bg-white text-black font-black text-xs uppercase">
                             <MessageSquare className="inline-block h-3 w-3 mr-1" />
@@ -250,7 +268,14 @@ export default function Home() {
                     </div>
                     
                     {/* Message Content */}
-                    {msg.type === 'image' ? (
+                    {msg.type === 'audio' ? (
+                      <div className="border-2 border-black p-4 bg-white">
+                        <audio controls className="w-full">
+                          <source src={msg.content} type="audio/mpeg" />
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>
+                    ) : msg.type === 'image' ? (
                       <div className="space-y-3">
                         <div className="border-2 border-black p-2 bg-white">
                           <img 

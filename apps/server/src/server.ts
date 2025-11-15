@@ -88,6 +88,15 @@ wss.on('connection', (ws: WebSocket) => {
           (data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4e && data[3] === 0x47) ||
           (data[0] === 0x47 && data[1] === 0x49 && data[2] === 0x46));
 
+      const isMP3 =
+        data.length > 3 &&
+        (
+          // ID3v2 tag
+          (data[0] === 0x49 && data[1] === 0x44 && data[2] === 0x33) ||
+          // MP3 frame sync (0xFF followed by sync pattern)
+          (data[0] === 0xff && (data[1] & 0xe0) === 0xe0)
+        );
+
       if (isImage) {
         const base64Image = data.toString('base64');
         const imageDataUrl = `data:image/jpeg;base64,${base64Image}`;
@@ -108,7 +117,23 @@ wss.on('connection', (ws: WebSocket) => {
         });
 
         return;
-}
+      }
+
+      if (isMP3) {
+        const base64Audio = data.toString('base64');
+        const audioDataUrl = `data:audio/mpeg;base64,${base64Audio}`;
+
+        console.log(`[WS] Received MP3 audio (${data.length} bytes)`);
+
+        // Send audio immediately
+        const audioMessage = JSON.stringify({
+          type: 'audio',
+          data: audioDataUrl,
+        });
+
+        broadcastMessage(audioMessage, ws);
+        return;
+      }
 
       const text = data.toString();
       console.log('[WS] Received text message');
@@ -116,9 +141,10 @@ wss.on('connection', (ws: WebSocket) => {
     try {
         const parsed = JSON.parse(text);
         if (parsed.text && parsed.text.length > 1000) {
-          const base64Match = parsed.text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
-          if (base64Match) {
-            const imageDataUrl = base64Match[0];
+          // Check for base64 image data
+          const imageMatch = parsed.text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
+          if (imageMatch) {
+            const imageDataUrl = imageMatch[0];
             
             // Send image immediately with loading state
             const imageMessage = JSON.stringify({
@@ -133,8 +159,23 @@ wss.on('connection', (ws: WebSocket) => {
               console.error('[WS] Unhandled error in processImageAnalysis:', error);
             });
 
-    return;
-  }
+            return;
+          }
+
+          // Check for base64 audio data
+          const audioMatch = parsed.text.match(/data:audio\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
+          if (audioMatch) {
+            const audioDataUrl = audioMatch[0];
+            
+            // Send audio immediately
+            const audioMessage = JSON.stringify({
+              type: 'audio',
+              data: audioDataUrl,
+            });
+
+            broadcastMessage(audioMessage, ws);
+            return;
+          }
         }
       } catch {
         // ignore invalid JSON
