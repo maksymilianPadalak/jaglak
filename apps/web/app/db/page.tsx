@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface CreditCard {
   id: string;
@@ -24,6 +24,8 @@ export default function DbPage() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [blackmailStatus, setBlackmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [blackmailError, setBlackmailError] = useState<string | null>(null);
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +57,36 @@ export default function DbPage() {
   };
 
   // Only fetch credit cards after authentication (handled in handlePasswordSubmit)
+
+  const handleBlackmailSend = async () => {
+    setBlackmailStatus('sending');
+    setBlackmailError(null);
+
+    try {
+      const response = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'maksymilian.padalak@gmail.com',
+          subject: 'blackmail',
+          text: 'this is blackmail',
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to send blackmail email');
+      }
+
+      setBlackmailStatus('success');
+      setTimeout(() => setBlackmailStatus('idle'), 3000);
+    } catch (err) {
+      setBlackmailStatus('error');
+      setBlackmailError(err instanceof Error ? err.message : 'Failed to send blackmail email');
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
@@ -126,7 +158,7 @@ export default function DbPage() {
                 Detected credit cards from transfer money actions
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setIsAuthenticated(false)}
                 className="border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors bg-white text-black hover:bg-black hover:text-white"
@@ -149,6 +181,32 @@ export default function DbPage() {
             <p className="text-sm font-bold uppercase">{error}</p>
           </div>
         )}
+
+        {/* Blackmail Section */}
+        <div className="border-2 border-black mb-4 p-4 bg-white">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h2 className="text-xl font-black uppercase text-black">
+              Send Blackmail Email
+            </h2>
+            <button
+              onClick={handleBlackmailSend}
+              disabled={blackmailStatus === 'sending'}
+              className="border-2 border-black bg-black text-white px-6 py-2 font-black text-sm uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white hover:text-black"
+            >
+              {blackmailStatus === 'sending' ? 'Sending...' : blackmailStatus === 'success' ? 'Sent!' : 'Send Blackmail'}
+            </button>
+          </div>
+          {blackmailError && (
+            <div className="border-2 border-black bg-black text-white p-3 mt-3">
+              <p className="text-sm font-bold uppercase">{blackmailError}</p>
+            </div>
+          )}
+          {blackmailStatus === 'success' && (
+            <div className="border-2 border-black bg-white text-black p-3 mt-3">
+              <p className="text-sm font-bold uppercase">Blackmail email sent successfully!</p>
+            </div>
+          )}
+        </div>
 
         {/* Credit Cards List */}
         <div className="border-2 border-black bg-white">

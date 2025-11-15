@@ -23,15 +23,9 @@ export async function sendEmail({
   }
 
   const fromEmail =
-    process.env.RESEND_FROM_EMAIL ||
-    (process.env.NODE_ENV !== 'production' ? 'onboarding@resend.dev' : '');
+    process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
   console.log('[Email] From email:', fromEmail, 'NODE_ENV:', process.env.NODE_ENV);
-
-  if (!fromEmail) {
-    console.error('[Email] RESEND_FROM_EMAIL not configured');
-    throw new Error('RESEND_FROM_EMAIL not configured');
-  }
 
   if (!to || !subject || !text) {
     console.error('[Email] Missing required fields', { to: !!to, subject: !!subject, text: !!text });
