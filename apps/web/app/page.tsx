@@ -435,8 +435,13 @@ export default function Home() {
                               )}
                             </div>
                           ) : (
-                            <div className="text-sm font-bold uppercase text-black opacity-50">
-                              No processing data available
+                            <div className="border-2 border-black bg-black text-white px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="border-2 border-white w-8 h-8 flex items-center justify-center">
+                                  <span className="text-white text-xl leading-none">✓</span>
+                                </div>
+                                <span className="text-sm font-black uppercase">Audio data sent!</span>
+                              </div>
                             </div>
                           )}
                         </div>
