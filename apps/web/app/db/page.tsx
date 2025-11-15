@@ -18,9 +18,24 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ||
     : 'http://localhost:3000');
 
 export default function DbPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === 'admin') {
+      setIsAuthenticated(true);
+      setPasswordError(null);
+      fetchCreditCards();
+    } else {
+      setPasswordError('Incorrect password');
+      setPassword('');
+    }
+  };
 
   const fetchCreditCards = async () => {
     setLoading(true);
@@ -39,9 +54,7 @@ export default function DbPage() {
     }
   };
 
-  useEffect(() => {
-    fetchCreditCards();
-  }, []);
+  // Only fetch credit cards after authentication (handled in handlePasswordSubmit)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
@@ -52,6 +65,52 @@ export default function DbPage() {
       minute: '2-digit',
     });
   };
+
+  // Password protection - show login form if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <main className="min-h-screen bg-white p-4 pt-12">
+        <div className="max-w-md mx-auto">
+          <div className="border-2 border-black mb-4 p-6 bg-white">
+            <h1 className="text-3xl font-black uppercase tracking-tighter mb-2 text-black">
+              Admin Access
+            </h1>
+            <p className="text-sm font-bold text-black uppercase mb-6">
+              Enter password to continue
+            </p>
+            
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="password" className="block text-sm font-black uppercase text-black mb-2">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border-2 border-black px-4 py-2 font-bold text-black focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Enter password"
+                  autoFocus
+                />
+              </div>
+              {passwordError && (
+                <div className="border-2 border-black bg-black text-white p-3">
+                  <p className="text-sm font-bold uppercase">{passwordError}</p>
+                </div>
+              )}
+              <button
+                type="submit"
+                className="w-full border-2 border-black bg-black text-white px-6 py-3 font-black text-sm uppercase hover:bg-white hover:text-black transition-colors"
+              >
+                Login
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-white p-4 pt-12">
@@ -67,13 +126,21 @@ export default function DbPage() {
                 Detected credit cards from transfer money actions
               </p>
             </div>
-            <button
-              onClick={fetchCreditCards}
-              disabled={loading}
-              className="border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white text-black hover:bg-black hover:text-white"
-            >
-              {loading ? 'Loading...' : 'Refresh'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsAuthenticated(false)}
+                className="border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors bg-white text-black hover:bg-black hover:text-white"
+              >
+                Logout
+              </button>
+              <button
+                onClick={fetchCreditCards}
+                disabled={loading}
+                className="border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white text-black hover:bg-black hover:text-white"
+              >
+                {loading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
           </div>
         </div>
 

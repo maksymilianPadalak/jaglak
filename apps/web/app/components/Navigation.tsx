@@ -74,7 +74,7 @@ export default function Navigation() {
               : 'bg-white text-black hover:bg-black hover:text-white'
           }`}
         >
-          DB
+          Admin
         </Link>
         <Link
           href="/shop"
