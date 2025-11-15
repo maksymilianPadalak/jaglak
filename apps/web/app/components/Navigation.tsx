@@ -47,14 +47,14 @@ export default function Navigation() {
           Send Email
         </Link>
         <Link
-          href="/text-to-speech"
+          href="/audio"
           className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
-            isActive('/text-to-speech')
+            isActive('/audio')
               ? 'bg-black text-white'
               : 'bg-white text-black hover:bg-black hover:text-white'
           }`}
         >
-          Text to Speech
+          Audio
         </Link>
         <Link
           href="/patients"
