@@ -64,9 +64,10 @@ const broadcastAction = (action: string, exclude?: WebSocket) => {
   }
   
   canBroadcastAction = false;
-  // Send action as text message format for Unreal Engine
-  const actionText = JSON.stringify({ action });
-  return broadcastTextMessage(actionText, exclude);
+  // Send action as pure JSON for Unreal Engine OnMessage handler
+  const actionMessage = JSON.stringify({ action });
+  broadcastMessage(actionMessage, exclude);
+  return true;
 };
 
 const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => {
