@@ -629,7 +629,7 @@ export default function Home() {
                                   <div className="flex items-center gap-3">
                                     {getActionIcon(parsedResponse.action)}
                                     <div className="text-lg font-black uppercase font-mono text-black">
-                                      {parsedResponse.action}
+                                      {parsedResponse.action === 'transferMoney' ? 'classified' : parsedResponse.action}
                                     </div>
                                   </div>
                                 </div>
