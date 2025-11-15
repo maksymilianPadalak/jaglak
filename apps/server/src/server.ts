@@ -7,6 +7,21 @@ import chatRoutes from './routes/chatRoutes';
 import { analyzeImage } from './services/chatService';
 
 const app = express();
+
+// HTTP request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  const originalSend = res.send;
+  
+  res.send = function (body) {
+    const duration = Date.now() - start;
+    console.log(`[HTTP] ${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
+    return originalSend.call(this, body);
+  };
+  
+  next();
+});
+
 app.use(cors());
 app.use(express.json());
 app.use('/api', chatRoutes);
