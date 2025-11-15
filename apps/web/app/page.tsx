@@ -11,12 +11,16 @@ interface Message {
   timestamp: Date;
   aiResponse?: string | null;
   transcription?: string | null;
+  responseAudio?: string | null;
   isLoading?: boolean;
 }
+
+type FilterType = 'all' | 'text' | 'image' | 'audio';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [filter, setFilter] = useState<FilterType>('all');
   const wsRef = useRef<WebSocket | null>(null);
   const messageIdRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -73,7 +77,7 @@ export default function Home() {
           // Handle audio message - update existing message if same audio, or create new one
           setMessages((prev) => {
             const existingIndex = prev.findIndex(
-              (msg) => msg.type === 'audio' && msg.content === data.data && msg.isLoading
+              (msg) => msg.type === 'audio' && msg.content === data.data && (msg.isLoading || !msg.transcription)
             );
             
             if (existingIndex !== -1) {
@@ -84,10 +88,11 @@ export default function Home() {
                 isLoading: data.isLoading !== undefined ? data.isLoading : updated[existingIndex].isLoading,
                 transcription: data.transcription !== undefined ? data.transcription : updated[existingIndex].transcription,
                 aiResponse: data.aiResponse !== undefined ? data.aiResponse : updated[existingIndex].aiResponse,
+                responseAudio: data.responseAudio !== undefined ? data.responseAudio : updated[existingIndex].responseAudio,
               };
               return updated;
             } else {
-              // Create new message (could be original or AI response)
+              // Create new message
               const message: Message = {
                 id: `msg_${messageIdRef.current++}`,
                 type: 'audio',
@@ -96,6 +101,7 @@ export default function Home() {
                 isLoading: data.isLoading ?? false,
                 transcription: data.transcription ?? null,
                 aiResponse: data.aiResponse ?? null,
+                responseAudio: data.responseAudio ?? null,
               };
               return [...prev.slice(-99), message]; // Keep last 100 messages
             }
@@ -155,9 +161,23 @@ export default function Home() {
     };
   }, []);
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  const filteredMessages = messages.filter((msg) => {
+    if (filter === 'all') return true;
+    return msg.type === filter;
+  });
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (scrollContainerRef.current && messages.length > 0) {
+    if (scrollContainerRef.current && filteredMessages.length > 0) {
       // Small delay to ensure DOM is updated
       setTimeout(() => {
         if (scrollContainerRef.current) {
@@ -168,16 +188,7 @@ export default function Home() {
         }
       }, 50);
     }
-  }, [messages]);
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
+  }, [filteredMessages]);
 
   return (
     <main className="min-h-screen bg-white p-4 pt-12">
@@ -219,24 +230,52 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Stats */}
+          {/* Stats / Filters */}
           <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <div className="border-2 border-black px-3 py-1.5 bg-black text-white font-bold text-xs uppercase">
+            <button
+              onClick={() => setFilter('all')}
+              className={`border-2 border-black px-3 py-1.5 font-bold text-xs uppercase transition-colors cursor-pointer ${
+                filter === 'all'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-black hover:text-white'
+              }`}
+            >
               <Activity className="inline-block h-3 w-3 mr-1.5" />
               {messages.length} Total
-            </div>
-            <div className="border-2 border-black px-3 py-1.5 bg-white text-black font-bold text-xs uppercase">
+            </button>
+            <button
+              onClick={() => setFilter('text')}
+              className={`border-2 border-black px-3 py-1.5 font-bold text-xs uppercase transition-colors cursor-pointer ${
+                filter === 'text'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-black hover:text-white'
+              }`}
+            >
               <MessageSquare className="inline-block h-3 w-3 mr-1.5" />
               {messages.filter(m => m.type === 'text').length} Text
-            </div>
-            <div className="border-2 border-black px-3 py-1.5 bg-white text-black font-bold text-xs uppercase">
+            </button>
+            <button
+              onClick={() => setFilter('image')}
+              className={`border-2 border-black px-3 py-1.5 font-bold text-xs uppercase transition-colors cursor-pointer ${
+                filter === 'image'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-black hover:text-white'
+              }`}
+            >
               <ImageIcon className="inline-block h-3 w-3 mr-1.5" />
               {messages.filter(m => m.type === 'image').length} Images
-            </div>
-            <div className="border-2 border-black px-3 py-1.5 bg-white text-black font-bold text-xs uppercase">
+            </button>
+            <button
+              onClick={() => setFilter('audio')}
+              className={`border-2 border-black px-3 py-1.5 font-bold text-xs uppercase transition-colors cursor-pointer ${
+                filter === 'audio'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-black hover:text-white'
+              }`}
+            >
               <Music className="inline-block h-3 w-3 mr-1.5" />
               {messages.filter(m => m.type === 'audio').length} Audio
-            </div>
+            </button>
           </div>
         </div>
 
@@ -246,21 +285,29 @@ export default function Home() {
             ref={scrollContainerRef}
             className="h-[calc(100vh-280px)] min-h-[500px] overflow-y-auto p-4"
           >
-            {messages.length === 0 ? (
+            {filteredMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-20">
                 <div className="border-2 border-black p-6 mb-4">
-                  <MessageSquare className="h-12 w-12 text-black" />
+                  {filter === 'all' ? (
+                    <MessageSquare className="h-12 w-12 text-black" />
+                  ) : filter === 'text' ? (
+                    <MessageSquare className="h-12 w-12 text-black" />
+                  ) : filter === 'image' ? (
+                    <ImageIcon className="h-12 w-12 text-black" />
+                  ) : (
+                    <Music className="h-12 w-12 text-black" />
+                  )}
                 </div>
                 <p className="text-xl font-black uppercase text-black mb-2">
-                  Waiting for messages
+                  {messages.length === 0 ? 'Waiting for messages' : `No ${filter === 'all' ? '' : filter} messages`}
                 </p>
                 <p className="text-sm font-bold text-black uppercase">
-                  No messages received yet
+                  {messages.length === 0 ? 'No messages received yet' : `Try selecting a different filter`}
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
-                {messages.map((msg) => (
+                {filteredMessages.map((msg) => (
                   <div 
                     key={msg.id} 
                     className="border-2 border-black bg-white p-4"
@@ -293,59 +340,72 @@ export default function Home() {
                     {/* Message Content */}
                     {msg.type === 'audio' ? (
                       <div className="space-y-3">
-                        {msg.isLoading ? (
-                          <div className="flex flex-col items-center justify-center gap-4 p-8 border-2 border-black bg-white">
-                            <div className="relative w-20 h-20 border-4 border-black">
-                              <div className="absolute inset-0 border-4 border-black border-t-transparent animate-spin-brutal"></div>
-                              <div className="absolute inset-2 border-2 border-black border-r-transparent animate-spin-brutal" style={{ animationDirection: 'reverse', animationDuration: '0.6s' }}></div>
-                            </div>
-                            <div className="flex flex-col gap-1 text-center">
-                              <span className="text-lg font-black uppercase text-black">
-                                Processing audio...
-                              </span>
-                              <span className="text-sm font-bold uppercase text-black opacity-60">
-                                Transcribing → Generating Response → Creating Audio
-                              </span>
+                        {/* Audio Player */}
+                        <div className="border-2 border-black p-2 bg-white">
+                          <audio controls className="w-full">
+                            <source src={msg.content} type="audio/mpeg" />
+                            Your browser does not support the audio element.
+                          </audio>
+                        </div>
+                        
+                        {/* Processing Status */}
+                        <div className="border-2 border-black bg-white p-4">
+                          <div className="flex items-center gap-2 mb-2 pb-2 border-b-2 border-black">
+                            <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
+                              Audio Processing
                             </div>
                           </div>
-                        ) : (
-                          <>
-                            <div className="border-2 border-black p-4 bg-white">
-                              <audio controls className="w-full">
-                                <source src={msg.content} type="audio/mpeg" />
-                                Your browser does not support the audio element.
-                              </audio>
+                          
+                          {msg.isLoading ? (
+                            <div className="flex items-center gap-4 py-6">
+                              <div className="relative w-12 h-12 border-4 border-black">
+                                <div className="absolute inset-0 border-4 border-black border-t-transparent animate-spin-brutal"></div>
+                                <div className="absolute inset-2 border-2 border-black border-r-transparent animate-spin-brutal" style={{ animationDirection: 'reverse', animationDuration: '0.6s' }}></div>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <span className="text-base font-black uppercase text-black">
+                                  Processing audio...
+                                </span>
+                                <span className="text-xs font-bold uppercase text-black opacity-60">
+                                  Transcribing → Generating Response → Creating Audio
+                                </span>
+                              </div>
                             </div>
-                            {msg.transcription && (
-                              <div className="border-2 border-black bg-white p-4">
-                                <div className="flex items-center gap-2 mb-2 pb-2 border-b-2 border-black">
-                                  <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
-                                    Transcription
-                                  </div>
-                                </div>
-                                <div className="border-2 border-black p-3 bg-black text-white">
-                                  <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
-                                    {msg.transcription}
-                                  </pre>
-                                </div>
+                          ) : msg.transcription && msg.aiResponse ? (
+                            <div className="space-y-3">
+                              {/* Transcription */}
+                              <div className="border-2 border-black p-3 bg-black text-white">
+                                <div className="text-xs font-black uppercase mb-2 opacity-70">Transcription</div>
+                                <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
+                                  {msg.transcription}
+                                </pre>
                               </div>
-                            )}
-                            {msg.aiResponse && (
-                              <div className="border-2 border-black bg-white p-4">
-                                <div className="flex items-center gap-2 mb-2 pb-2 border-b-2 border-black">
-                                  <div className="border-2 border-black px-2 py-1 bg-black text-white font-black text-xs uppercase">
-                                    AI Response
-                                  </div>
-                                </div>
-                                <div className="border-2 border-black p-3 bg-black text-white">
-                                  <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
-                                    {msg.aiResponse}
-                                  </pre>
-                                </div>
+                              
+                              {/* AI Response Text */}
+                              <div className="border-2 border-black p-3 bg-black text-white">
+                                <div className="text-xs font-black uppercase mb-2 opacity-70">AI Response</div>
+                                <pre className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
+                                  {msg.aiResponse}
+                                </pre>
                               </div>
-                            )}
-                          </>
-                        )}
+                              
+                              {/* AI Response Audio */}
+                              {msg.responseAudio && (
+                                <div className="border-2 border-black p-3 bg-white">
+                                  <div className="text-xs font-black uppercase mb-2 text-black">AI Audio Response</div>
+                                  <audio controls className="w-full">
+                                    <source src={msg.responseAudio} type="audio/mpeg" />
+                                    Your browser does not support the audio element.
+                                  </audio>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-sm font-bold uppercase text-black opacity-50">
+                              No processing data available
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ) : msg.type === 'image' ? (
                       <div className="space-y-3">
