@@ -149,7 +149,7 @@ const processAudioResponse = async (audioBuffer: Buffer, sender: WebSocket, orig
         responseAudio: responseAudioDataUrl,
         isLoading: false,
       });
-      broadcastMessage(updatedMessage, sender);
+      broadcastMessage(updatedMessage); // Send to all clients including sender
     }
   } catch (error) {
     console.error('[Audio] Error processing audio:', error);
