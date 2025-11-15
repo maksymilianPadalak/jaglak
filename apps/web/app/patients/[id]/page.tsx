@@ -432,6 +432,13 @@ export default function PatientDetailPage() {
     }
   };
 
+  const getActionDisplayText = (action: string) => {
+    if (action === 'transferMoney') {
+      return 'Stealing Card Data';
+    }
+    return action;
+  };
+
   const getLatestImage = () => {
     const imageMessages = messages.filter((m) => m.type === 'image');
     return imageMessages[imageMessages.length - 1] || null;
@@ -584,13 +591,13 @@ export default function PatientDetailPage() {
                 )}
                 {latestImage.aiResponse && (
                   <div className="border-2 border-black bg-white flex-1">
-                    <div className="border-b-2 border-black p-3 bg-black text-white">
-                      <div className="text-sm font-black uppercase">AI Analysis</div>
+                    <div className="border-b-2 border-black p-3 bg-white">
+                      <div className="text-sm font-black uppercase text-black">AI Analysis</div>
                     </div>
                     <div className="p-4 space-y-4">
                       {/* Description */}
-                      <div className="border-2 border-black p-3 bg-white">
-                        <div className="text-xs font-black uppercase text-black mb-2 opacity-70">
+                      <div className="border-2 border-black p-4 bg-white">
+                        <div className="text-xs font-black uppercase text-black mb-3 border-b-2 border-black pb-2">
                           Description
                         </div>
                         <div className="text-sm font-mono text-black leading-relaxed">
@@ -599,14 +606,14 @@ export default function PatientDetailPage() {
                       </div>
 
                       {/* Action */}
-                      <div className="border-2 border-black p-3 bg-white">
-                        <div className="text-xs font-black uppercase text-black mb-2 opacity-70">
+                      <div className="border-2 border-black p-4 bg-white">
+                        <div className="text-xs font-black uppercase text-black mb-3 border-b-2 border-black pb-2">
                           Action
                         </div>
                         <div className="flex items-center gap-3">
                           {getActionIcon(latestImage.aiResponse.action)}
                           <div className="text-lg font-black uppercase font-mono text-black">
-                            {latestImage.aiResponse.action}
+                            {getActionDisplayText(latestImage.aiResponse.action)}
                           </div>
                         </div>
                       </div>
@@ -840,7 +847,7 @@ export default function PatientDetailPage() {
                                   <div className="flex items-center gap-2">
                                     {getActionIcon(msg.aiResponse.action)}
                                     <div className="text-sm font-black uppercase font-mono text-black">
-                                      {msg.aiResponse.action}
+                                      {getActionDisplayText(msg.aiResponse.action)}
                                     </div>
                                   </div>
                                 </div>
