@@ -4,7 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import { WebSocket, WebSocketServer } from 'ws';
 import chatRoutes from './routes/chatRoutes';
-import { analyzeImage } from './services/chatService';
+import { analyzeImage, ImageAnalysisResult } from './services/chatService';
 
 const app = express();
 
@@ -23,7 +23,9 @@ app.use((req, res, next) => {
 });
 
 app.use(cors());
-app.use(express.json());
+// Increase body size limit to 100MB for image uploads
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use('/api', chatRoutes);
 
 const server = http.createServer(app);
@@ -43,24 +45,30 @@ const broadcastMessage = (message: string, exclude?: WebSocket) => {
 const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => {
   console.log('[Analysis] Starting GPT analysis pipeline');
   try {
-    const aiResponse = await analyzeImage(imageDataUrl);
-    console.log('[Analysis] GPT returned response, length:', aiResponse?.length || 0);
+    const analysisResult = await analyzeImage(imageDataUrl);
+    console.log('[Analysis] GPT returned response:', {
+      description: analysisResult.description?.substring(0, 100),
+      action: analysisResult.action,
+    });
 
     const updatedMessage = JSON.stringify({
       type: 'image',
       data: imageDataUrl,
-      aiResponse,
+      aiResponse: JSON.stringify(analysisResult),
       isLoading: false,
     });
 
     broadcastMessage(updatedMessage, sender);
   } catch (error) {
     console.error('[Analysis] Error analyzing image:', error);
-    const errorAnalysis = `Error: ${error instanceof Error ? error.message : 'Failed to analyze image'}`;
+    const errorAnalysis: ImageAnalysisResult = {
+      description: `Error: ${error instanceof Error ? error.message : 'Failed to analyze image'}`,
+      action: 'noAction',
+    };
     const errorMessage = JSON.stringify({
       type: 'image',
       data: imageDataUrl,
-      aiResponse: errorAnalysis,
+      aiResponse: JSON.stringify(errorAnalysis),
       isLoading: false,
     });
 

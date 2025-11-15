@@ -19,13 +19,16 @@ importers:
         version: 4.21.2
       openai:
         specifier: ^6.9.0
-        version: 6.9.0(ws@8.18.3)
+        version: 6.9.0(ws@8.18.3)(zod@4.1.12)
       resend:
         specifier: ^6.4.2
         version: 6.4.2
       ws:
         specifier: ^8.16.0
         version: 8.18.3
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -616,6 +619,9 @@ packages:
       utf-8-validate:
         optional: true
 
+  zod@4.1.12:
+    resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
+
 snapshots:
 
   '@esbuild/aix-ppc64@0.25.12':
@@ -1011,9 +1017,10 @@ snapshots:
     dependencies:
       ee-first: 1.1.1
 
-  openai@6.9.0(ws@8.18.3):
+  openai@6.9.0(ws@8.18.3)(zod@4.1.12):
     optionalDependencies:
       ws: 8.18.3
+      zod: 4.1.12
 
   parseurl@1.3.3: {}
 
@@ -1151,3 +1158,5 @@ snapshots:
   vary@1.1.2: {}
 
   ws@8.18.3: {}
+
+  zod@4.1.12: {}
