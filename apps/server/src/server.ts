@@ -46,12 +46,13 @@ const broadcastMessage = (message: string, exclude?: WebSocket) => {
 };
 
 const broadcastTextMessage = (text: string, exclude?: WebSocket) => {
-  if (!canBroadcastAction) {
-    console.log('[WS] Cannot broadcast text - waiting for action to complete');
-    return false;
-  }
+  // TODO: Re-enable flag check later
+  // if (!canBroadcastAction) {
+  //   console.log('[WS] Cannot broadcast text - waiting for action to complete');
+  //   return false;
+  // }
   
-  canBroadcastAction = false;
+  // canBroadcastAction = false;
   const textMessage = JSON.stringify({ type: 'text', text });
   broadcastMessage(textMessage, exclude);
   return true;
@@ -249,19 +250,18 @@ wss.on('connection', (ws: WebSocket) => {
     try {
         const parsed = JSON.parse(text);
         
-        // Check if this is an "action done" message
-        if (parsed.actionDone === true || parsed.type === 'actionDone') {
-          console.log('[WS] Action done received - allowing next action broadcast');
-          canBroadcastAction = true;
-          return;
-        }
-        
-        // If actionDone is not true, don't send actions or text
-        if (parsed.actionDone === false || (parsed.actionDone !== undefined && parsed.actionDone !== true)) {
-          console.log('[WS] Action done is false - blocking action/text broadcasts');
-          canBroadcastAction = false;
-          return;
-        }
+        // TODO: Re-enable actionDone flag handling if needed
+        // if (parsed.actionDone === true || parsed.type === 'actionDone') {
+        //   console.log('[WS] Action done received - allowing next action broadcast');
+        //   canBroadcastAction = true;
+        //   return;
+        // }
+        // 
+        // if (parsed.actionDone === false || (parsed.actionDone !== undefined && parsed.actionDone !== true)) {
+        //   console.log('[WS] Action done is false - blocking action/text broadcasts');
+        //   canBroadcastAction = false;
+        //   return;
+        // }
         
         if (parsed.text && parsed.text.length > 1000) {
           // Check for base64 image data
