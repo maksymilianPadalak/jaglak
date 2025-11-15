@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, ArrowLeft, Image as ImageIcon, X } from 'lucide-react';
-import Link from 'next/link';
+import { Send, Image as ImageIcon, X } from 'lucide-react';
 
 interface CreditCard {
   numbers: string;
@@ -207,21 +206,11 @@ export default function ChatPage() {
   return (
     <main className="min-h-screen bg-white p-4 pt-12">
       <div className="max-w-4xl mx-auto">
-        {/* Header with Navigation */}
-        <div className="border-2 border-black mb-4 p-3 bg-white">
-          <div className="flex items-center justify-between">
-            <Link 
-              href="/"
-              className="border-2 border-black px-4 py-2 font-black text-sm uppercase flex items-center gap-2 hover:bg-black hover:text-white transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Link>
-            <h1 className="text-3xl font-black uppercase tracking-tighter text-black">
-              AI Chat
-            </h1>
-            <div className="w-24"></div> {/* Spacer for centering */}
-          </div>
+        {/* Page Title */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-black uppercase tracking-tighter text-black">
+            AI Chat
+          </h1>
         </div>
 
         {/* Messages Container */}
