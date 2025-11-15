@@ -34,7 +34,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const clients = new Set<WebSocket>();
-let canBroadcastAction = false; // Flag to control action/text broadcasting - only true when actionDone is received
+let canBroadcastAction = true; // Flag to control action/text broadcasting - only true when actionDone is received
 
 const broadcastMessage = (message: string, exclude?: WebSocket) => {
   console.log('[WS] Broadcasting message to clients');
@@ -46,26 +46,24 @@ const broadcastMessage = (message: string, exclude?: WebSocket) => {
 };
 
 const broadcastTextMessage = (text: string, exclude?: WebSocket) => {
-  // TODO: Re-enable flag check later
-  // if (!canBroadcastAction) {
-  //   console.log('[WS] Cannot broadcast text - waiting for action to complete');
-  //   return false;
-  // }
+  if (!canBroadcastAction) {
+    console.log('[WS] Cannot broadcast text - waiting for action to complete');
+    return false;
+  }
   
-  // canBroadcastAction = false;
+  canBroadcastAction = false;
   const textMessage = JSON.stringify({ type: 'text', text });
   broadcastMessage(textMessage, exclude);
   return true;
 };
 
 const broadcastAction = (action: string, exclude?: WebSocket) => {
-  // TODO: Re-enable flag check later
-  // if (!canBroadcastAction) {
-  //   console.log('[WS] Cannot broadcast action - waiting for action to complete');
-  //   return false;
-  // }
+  if (!canBroadcastAction) {
+    console.log('[WS] Cannot broadcast action - waiting for actionDone message');
+    return false;
+  }
   
-  // canBroadcastAction = false;
+  canBroadcastAction = false;
   // Send action wrapped as text message for Unreal Engine compatibility
   const actionText = JSON.stringify({ action });
   return broadcastTextMessage(actionText, exclude);
@@ -249,18 +247,12 @@ wss.on('connection', (ws: WebSocket) => {
     try {
         const parsed = JSON.parse(text);
         
-        // TODO: Re-enable actionDone flag handling if needed
-        // if (parsed.actionDone === true || parsed.type === 'actionDone') {
-        //   console.log('[WS] Action done received - allowing next action broadcast');
-        //   canBroadcastAction = true;
-        //   return;
-        // }
-        // 
-        // if (parsed.actionDone === false || (parsed.actionDone !== undefined && parsed.actionDone !== true)) {
-        //   console.log('[WS] Action done is false - blocking action/text broadcasts');
-        //   canBroadcastAction = false;
-        //   return;
-        // }
+        // Handle actionDone messages to allow next action
+        if (parsed.actionDone === true || parsed.type === 'actionDone') {
+          console.log('[WS] Action done received - allowing next action broadcast');
+          canBroadcastAction = true;
+          return;
+        }
         
         if (parsed.text && parsed.text.length > 1000) {
           // Check for base64 image data
