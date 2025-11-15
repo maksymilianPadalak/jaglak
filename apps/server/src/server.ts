@@ -249,7 +249,7 @@ wss.on('connection', (ws: WebSocket) => {
         
         // Check if this is an "action done" message
         if (parsed.actionDone === true || parsed.type === 'actionDone') {
-          console.log('[WS] Action done received - allowing next action/text broadcast');
+          console.log('[WS] Action done received - allowing next action broadcast');
           canBroadcastAction = true;
           return;
         }
