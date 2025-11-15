@@ -1,0 +1,18 @@
+# Development Rules
+
+## Git Workflow
+
+- **NEVER commit or push changes unless explicitly asked by the user**
+- Only commit when the user explicitly requests it (e.g., "commit and push", "commit these changes")
+- Do not automatically commit changes, even if they seem complete or working
+
+## OpenAI API Usage
+
+- **ALWAYS use the Responses API** (`client.responses.create()`) for all OpenAI API calls
+- Never use Chat Completions API (`client.chat.completions.create()`) unless Responses API is not available for the specific use case
+- Use Responses API format:
+  - `input`: Array with `role` and `content` (containing `input_text` and/or `input_image`)
+  - `instructions`: For system prompts
+  - `model`: Specify the model (e.g., `gpt-4o-mini`)
+  - For images: Use `type: 'input_image'` with `image_url` (base64 data URL) and `detail: 'high'`
+- For structured outputs: Parse `output_text` as JSON and validate with Zod schemas
