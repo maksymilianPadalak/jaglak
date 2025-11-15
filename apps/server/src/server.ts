@@ -107,7 +107,7 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
 
     // Send action as separate message (skip if noAction)
     if (analysisResult.action !== 'noAction') {
-      broadcastAction(analysisResult.action, sender);
+      broadcastAction(analysisResult.action);
     }
   } catch (error) {
     console.error('[Analysis] Error analyzing image:', error);
