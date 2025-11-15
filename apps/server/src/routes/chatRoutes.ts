@@ -4,6 +4,7 @@ import { sendEmailHandler } from '../controllers/emailController';
 import { postTextToSpeech, getVoicesList } from '../controllers/elevenLabsController';
 import { postTranscribeAudio } from '../controllers/whisperController';
 import { createTask, getTasks, updateTask } from '../controllers/taskController';
+import { getCreditCards } from '../controllers/creditCardController';
 
 const router: Router = Router();
 
@@ -17,6 +18,7 @@ router.post('/whisper/transcribe', postTranscribeAudio);
 router.post('/tasks', createTask);
 router.get('/tasks', getTasks);
 router.patch('/tasks/:id', updateTask);
+router.get('/credit-cards', getCreditCards);
 
 export default router;
 

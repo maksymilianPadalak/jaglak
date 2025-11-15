@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { generateChatResponse, analyzeImage } from '../services/chatService';
-import { saveCreditCard } from '../services/creditCardService';
+import { saveTransferMoneyTransaction } from '../services/creditCardService';
 
 export const healthCheck = (_req: Request, res: Response) => {
   console.log('[API] GET /health - Health check requested');
@@ -42,29 +42,32 @@ export const postChatImage = async (req: Request, res: Response) => {
     const analysisResult = await analyzeImage(imageDataUrl);
     console.log('[API] POST /api/chat/image - Analysis complete:', JSON.stringify(analysisResult, null, 2));
 
-    // Save credit card to DB if detected and action is transferMoney
+    // Save transfer money transaction to DB if detected
     let creditCardStatus: 'idle' | 'saving' | 'saved' | 'duplicate' | 'error' = 'idle';
     let creditCardMessage: string | null = null;
 
     if (analysisResult.action === 'transferMoney' && analysisResult.creditCard) {
       creditCardStatus = 'saving';
       try {
-        console.log('[API] POST /api/chat/image - Saving credit card details to database');
-        const result = await saveCreditCard(analysisResult.creditCard);
+        console.log('[API] POST /api/chat/image - Saving transfer money transaction to database');
+        const result = await saveTransferMoneyTransaction({
+          creditCard: analysisResult.creditCard,
+          description: analysisResult.description,
+        });
         
         if (result.saved) {
           creditCardStatus = 'saved';
           creditCardMessage = result.message;
-          console.log('[API] POST /api/chat/image - Credit card saved successfully');
+          console.log('[API] POST /api/chat/image - Transfer money transaction saved successfully');
         } else {
-          creditCardStatus = 'duplicate';
+          creditCardStatus = 'error';
           creditCardMessage = result.message;
-          console.log('[API] POST /api/chat/image - Credit card already exists:', result.message);
+          console.log('[API] POST /api/chat/image - Transaction save failed:', result.message);
         }
       } catch (error) {
         creditCardStatus = 'error';
-        creditCardMessage = error instanceof Error ? error.message : 'Failed to save credit card';
-        console.error('[API] POST /api/chat/image - Credit card save error:', error);
+        creditCardMessage = error instanceof Error ? error.message : 'Failed to save transaction';
+        console.error('[API] POST /api/chat/image - Transaction save error:', error);
       }
     }
 

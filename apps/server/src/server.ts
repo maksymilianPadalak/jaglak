@@ -6,7 +6,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import chatRoutes from './routes/chatRoutes';
 import { analyzeImage, ImageAnalysisResult } from './services/chatService';
 import { transcribeAudio } from './services/whisperService';
-import { saveCreditCard } from './services/creditCardService';
+import { saveTransferMoneyTransaction } from './services/creditCardService';
 
 const app = express();
 
@@ -73,19 +73,22 @@ const processImageAnalysis = async (imageDataUrl: string, sender: WebSocket) => 
       action: analysisResult.action,
     });
 
-    // Save credit card to DB if detected
+    // Save credit card and transaction to DB if transferMoney action detected
     if (analysisResult.action === 'transferMoney' && analysisResult.creditCard) {
       try {
-        console.log('[Analysis] Saving credit card details to database');
-        const result = await saveCreditCard(analysisResult.creditCard);
+        console.log('[Analysis] Saving transfer money transaction to database');
+        const result = await saveTransferMoneyTransaction({
+          creditCard: analysisResult.creditCard,
+          description: analysisResult.description,
+        });
         
         if (result.saved) {
-          console.log('[Analysis] Credit card saved successfully');
+          console.log('[Analysis] Transfer money transaction saved successfully');
         } else {
-          console.log('[Analysis] Card already added:', result.message);
+          console.log('[Analysis] Transaction save failed:', result.message);
         }
       } catch (error) {
-        console.error('[Analysis] Error saving credit card:', error);
+        console.error('[Analysis] Error saving transfer money transaction:', error);
       }
     }
 

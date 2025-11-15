@@ -14,10 +14,10 @@ export default function CaremateLandingPage() {
             <div>
               <h1 className="text-3xl font-black uppercase tracking-tighter mb-1 text-black">
                 CareMate System
-              </h1>
+          </h1>
               <p className="text-sm font-bold text-black uppercase">
                 Robot + Cameras + AI Brain
-              </p>
+          </p>
             </div>
             <div className="flex items-center gap-2">
               <Link 
@@ -56,8 +56,8 @@ export default function CaremateLandingPage() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+          </div>
+          </div>
 
             {/* Content Section */}
             <div className="p-6 flex flex-col justify-center">
@@ -72,20 +72,20 @@ export default function CaremateLandingPage() {
                   <span className="font-black text-black">•</span>
                   <p className="text-sm font-bold text-black">
                     Advanced AI brain analyzes situations in real-time
-                  </p>
-                </div>
+            </p>
+          </div>
                 <div className="flex items-start gap-2">
                   <span className="font-black text-black">•</span>
                   <p className="text-sm font-bold text-black">
                     Network of cameras monitors the entire house
-                  </p>
-                </div>
+            </p>
+          </div>
                 <div className="flex items-start gap-2">
                   <span className="font-black text-black">•</span>
                   <p className="text-sm font-bold text-black">
                     Robot assistant provides physical support and companionship
-                  </p>
-                </div>
+            </p>
+          </div>
               </div>
             </div>
           </div>
@@ -117,8 +117,8 @@ export default function CaremateLandingPage() {
               Physical robot that can assist with tasks, provide companionship, and respond to emergencies
             </p>
           </div>
+          </div>
         </div>
-      </div>
     </div>
   );
 }

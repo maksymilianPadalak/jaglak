@@ -24,5 +24,23 @@ model CreditCard {
   fullName       String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  
+  // Relations
+  transactions   TransferMoneyTransaction[]
+}
+
+model TransferMoneyTransaction {
+  id          String      @id @default(cuid())
+  creditCardId String?
+  creditCard  CreditCard? @relation(fields: [creditCardId], references: [id], onDelete: SetNull)
+  
+  // Credit card details (stored for reference even if card is deleted)
+  cardNumbers String
+  amount      String?     // Optional amount if detected from image
+  description String?     // Description from AI analysis
+  action      String      @default("transferMoney")
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
