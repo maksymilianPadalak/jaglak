@@ -64,7 +64,7 @@ const broadcastAction = (action: string, exclude?: WebSocket) => {
   }
   
   canBroadcastAction = false;
-  // Send action as text message format
+  // Send action as text message format for Unreal Engine
   const actionText = JSON.stringify({ action });
   return broadcastTextMessage(actionText, exclude);
 };
