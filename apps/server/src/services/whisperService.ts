@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { textToSpeech } from './elevenLabsService';
 
 const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -12,11 +13,13 @@ export interface TranscriptionOptions {
   language?: string;
   prompt?: string;
   responseFormat?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';
+  voiceId?: string;
 }
 
 export interface TranscriptionResult {
   transcription: string;
   aiResponse: string;
+  audioBuffer: Buffer;
 }
 
 export async function transcribeAudio(options: TranscriptionOptions): Promise<TranscriptionResult> {
@@ -72,9 +75,22 @@ export async function transcribeAudio(options: TranscriptionOptions): Promise<Tr
 
       const aiResponse = response.output_text || '';
 
+      // Generate audio from AI response using Eleven Labs
+      console.log('[Whisper] AI response generated, generating audio with Eleven Labs');
+      const defaultVoiceId = 'JBFqnCBsd6RMkjVDRZzb';
+      const audioBuffer = await textToSpeech({
+        voiceId: options.voiceId || defaultVoiceId,
+        text: aiResponse,
+        modelId: 'eleven_multilingual_v2',
+        outputFormat: 'mp3_44100_128',
+      });
+
+      console.log('[Whisper] Audio generated, size:', audioBuffer.length, 'bytes');
+
       return {
         transcription: transcriptionText,
         aiResponse: aiResponse,
+        audioBuffer: audioBuffer,
       };
     } finally {
       // Clean up temp file

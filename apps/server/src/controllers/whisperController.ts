@@ -32,13 +32,22 @@ export const postTranscribeAudio = async (req: Request, res: Response) => {
       language: req.body.language,
       prompt: req.body.prompt,
       responseFormat: req.body.responseFormat || 'text',
+      voiceId: req.body.voiceId,
     });
 
-    console.log('[API] POST /api/whisper/transcribe - Transcription complete, transcription length:', result.transcription.length);
+    console.log('[API] POST /api/whisper/transcribe - Complete flow finished');
+    console.log('[API] POST /api/whisper/transcribe - Transcription length:', result.transcription.length);
     console.log('[API] POST /api/whisper/transcribe - AI response length:', result.aiResponse.length);
+    console.log('[API] POST /api/whisper/transcribe - Generated audio size:', result.audioBuffer.length, 'bytes');
+
+    // Convert audio buffer to base64 for JSON response
+    const audioBase64 = result.audioBuffer.toString('base64');
+    const audioDataUrl = `data:audio/mpeg;base64,${audioBase64}`;
+
     res.json({ 
       transcription: result.transcription,
       aiResponse: result.aiResponse,
+      audio: audioDataUrl,
     });
   } catch (error) {
     console.error('[API] POST /api/whisper/transcribe - Error:', error);
