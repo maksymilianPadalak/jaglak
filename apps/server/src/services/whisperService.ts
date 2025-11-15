@@ -22,7 +22,10 @@ export interface TranscriptionResult {
   audioBuffer: Buffer;
 }
 
-export async function transcribeAudio(options: TranscriptionOptions): Promise<TranscriptionResult> {
+export async function transcribeAudio(
+  options: TranscriptionOptions,
+  onAudioChunk?: (chunk: Buffer) => void
+): Promise<TranscriptionResult> {
   if (!openai) {
     throw new Error('OPENAI_API_KEY not configured');
   }
@@ -83,7 +86,7 @@ export async function transcribeAudio(options: TranscriptionOptions): Promise<Tr
         text: aiResponse,
         modelId: 'eleven_multilingual_v2',
         outputFormat: 'mp3_44100_128',
-      });
+      }, onAudioChunk);
 
       console.log('[Whisper] Audio generated, size:', audioBuffer.length, 'bytes');
 

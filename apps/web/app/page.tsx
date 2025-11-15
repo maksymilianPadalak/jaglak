@@ -22,7 +22,6 @@ export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
   const [sendSuccess, setSendSuccess] = useState<string | null>(null);
-  const [canReceiveActions, setCanReceiveActions] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
   const messageIdRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -45,11 +44,6 @@ export default function Home() {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        
-        // Check for actionDone message (can come unwrapped)
-        if (data.actionDone === true || data.type === 'actionDone') {
-          setCanReceiveActions(true);
-        }
         
         if (data.type === 'image' && data.data) {
           // Handle image message - update existing message if same image, or create new one
@@ -122,21 +116,6 @@ export default function Home() {
             timestamp: new Date(),
           };
           setMessages((prev) => [...prev.slice(-99), message]);
-          
-          // Check if this is an action message (contains action JSON)
-          try {
-            const parsed = JSON.parse(data.text);
-            if (parsed.action) {
-              // Action received - block further actions until actionDone
-              setCanReceiveActions(false);
-            }
-            // Check if this is an actionDone message
-            if (parsed.actionDone === true) {
-              setCanReceiveActions(true);
-            }
-          } catch {
-            // Not JSON, ignore
-          }
         } else if (data.text) {
           // Legacy format - check if it's an image in text format
           const text = data.text;
@@ -256,21 +235,6 @@ export default function Home() {
                 <MessageCircle className="h-4 w-4" />
                 AI Chat
               </Link>
-              <div className={`border-2 border-black px-4 py-2 flex items-center gap-2 font-black text-sm uppercase ${
-                canReceiveActions ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-              }`}>
-                {canReceiveActions ? (
-                  <>
-                    <Activity className="h-4 w-4" />
-                    <span>Ready for Actions</span>
-                  </>
-                ) : (
-                  <>
-                    <Activity className="h-4 w-4" />
-                    <span>Action in Progress</span>
-                  </>
-                )}
-              </div>
               <div className={`border-2 border-black px-4 py-2 flex items-center gap-2 font-black text-sm uppercase ${
                 isConnected ? 'bg-black text-white' : 'bg-white text-black'
               }`}>

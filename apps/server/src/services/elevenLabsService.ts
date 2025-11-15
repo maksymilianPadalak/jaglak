@@ -13,7 +13,10 @@ export interface TextToSpeechOptions {
   outputFormat?: string;
 }
 
-export async function textToSpeech(options: TextToSpeechOptions): Promise<Buffer> {
+export async function textToSpeech(
+  options: TextToSpeechOptions,
+  onChunk?: (chunk: Buffer) => void
+): Promise<Buffer> {
   if (!elevenlabs) {
     throw new Error('ELEVENLABS_API_KEY not configured');
   }
@@ -36,12 +39,16 @@ export async function textToSpeech(options: TextToSpeechOptions): Promise<Buffer
     // Convert the audio stream to Buffer
     const chunks: Uint8Array[] = [];
     const reader = audio.getReader();
-    
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       if (value) {
         chunks.push(value);
+        // Call onChunk callback if provided to stream audio chunks immediately
+        if (onChunk) {
+          onChunk(Buffer.from(value));
+        }
       }
     }
 

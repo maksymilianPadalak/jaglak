@@ -127,6 +127,14 @@ const processAudioResponse = async (audioBuffer: Buffer, sender: WebSocket, orig
     const result = await transcribeAudio({
       audioBuffer,
       responseFormat: 'text',
+    }, (chunk) => {
+      // Stream audio chunks to all WebSocket clients as they arrive from Eleven Labs
+      console.log('[Audio] Broadcasting chunk to clients, size:', chunk.length, 'bytes');
+      clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(chunk);
+        }
+      });
     });
 
     console.log('[Audio] Processing complete:', {
