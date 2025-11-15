@@ -139,17 +139,18 @@ const processAudioResponse = async (audioBuffer: Buffer, sender: WebSocket, orig
     const audioBase64 = result.audioBuffer.toString('base64');
     const responseAudioDataUrl = `data:audio/mpeg;base64,${audioBase64}`;
 
-    // Send audio message to all clients
-    const audioMessage = JSON.stringify({
-      type: 'audio',
-      audio: responseAudioDataUrl,
-    });
-
-    clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(audioMessage);
-      }
-    });
+    // Update original message with transcription and AI response (keep original audio)
+    if (originalDataUrl) {
+      const updatedMessage = JSON.stringify({
+        type: 'audio',
+        data: originalDataUrl,
+        transcription: result.transcription,
+        aiResponse: result.aiResponse,
+        responseAudio: responseAudioDataUrl,
+        isLoading: false,
+      });
+      broadcastMessage(updatedMessage, sender);
+    }
   } catch (error) {
     console.error('[Audio] Error processing audio:', error);
     
