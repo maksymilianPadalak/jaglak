@@ -15,10 +15,10 @@ interface Patient {
 const mockPatients: Patient[] = [
   {
     id: '1',
-    name: 'Janusz Padalak',
-    patientImage: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&h=400&fit=crop',
+    name: 'Janusz',
+    patientImage: '/Janusz.png',
     robotId: 'ROB-001',
-    robotImage: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop',
+    robotImage: '/RobotForJanusz.png',
   },
   {
     id: '2',

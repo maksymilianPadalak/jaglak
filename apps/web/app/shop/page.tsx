@@ -175,6 +175,47 @@ export default function ShopPage() {
           </div>
         </div>
 
+        {/* Robot for Janusz */}
+        <div className="border-2 border-black p-6 bg-white mb-4">
+          <h3 className="text-xl font-black uppercase mb-4 text-black">
+            Robot for Janusz
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="border-2 border-black p-4 bg-gray-50">
+              <div className="text-4xl mb-2">🤖</div>
+              <h4 className="text-lg font-black uppercase mb-2 text-black">
+                Janusz Companion Robot
+              </h4>
+              <p className="text-sm font-bold text-black mb-4">
+                Specialized robot designed specifically for Janusz&apos;s care needs. Includes advanced monitoring, medication reminders, and emergency response capabilities.
+              </p>
+              <div className="flex items-baseline gap-2 mb-4">
+                <span className="text-3xl font-black text-black">€2,999</span>
+                <span className="text-sm font-bold text-black opacity-60 line-through">€3,999</span>
+              </div>
+              <button className="w-full border-2 border-black bg-black text-white px-4 py-2 font-black text-sm uppercase hover:bg-white hover:text-black transition-colors">
+                Add to Cart
+              </button>
+            </div>
+            <div className="border-2 border-black p-4 bg-gray-50">
+              <div className="text-4xl mb-2">🔧</div>
+              <h4 className="text-lg font-black uppercase mb-2 text-black">
+                Janusz Maintenance Package
+              </h4>
+              <p className="text-sm font-bold text-black mb-4">
+                Complete maintenance and support package for Janusz&apos;s robot. Includes regular updates, technical support, and priority service.
+              </p>
+              <div className="flex items-baseline gap-2 mb-4">
+                <span className="text-3xl font-black text-black">€499</span>
+                <span className="text-sm font-bold text-black opacity-60">/year</span>
+              </div>
+              <button className="w-full border-2 border-black bg-black text-white px-4 py-2 font-black text-sm uppercase hover:bg-white hover:text-black transition-colors">
+                Subscribe
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Testimonials / Reviews */}
         <div className="border-2 border-black p-6 bg-white">
           <h3 className="text-xl font-black uppercase mb-4 text-black">

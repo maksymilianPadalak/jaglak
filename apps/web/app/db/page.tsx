@@ -162,13 +162,13 @@ Jaglak Healthcare Corporation`,
         <div className="border-2 border-black mb-4 p-3 bg-white">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h1 className="text-3xl font-black uppercase tracking-tighter mb-1 text-black">
+          <h1 className="text-3xl font-black uppercase tracking-tighter mb-1 text-black">
                 Credit Cards Database
-              </h1>
-              <p className="text-sm font-bold text-black uppercase">
+          </h1>
+          <p className="text-sm font-bold text-black uppercase">
                 Detected credit cards from transfer money actions
-              </p>
-            </div>
+          </p>
+        </div>
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setIsAuthenticated(false)}
@@ -187,11 +187,11 @@ Jaglak Healthcare Corporation`,
           </div>
         </div>
 
-        {error && (
+            {error && (
           <div className="border-2 border-black bg-black text-white p-3 mb-4">
-            <p className="text-sm font-bold uppercase">{error}</p>
-          </div>
-        )}
+                <p className="text-sm font-bold uppercase">{error}</p>
+              </div>
+            )}
 
         {/* Blackmail Section */}
         <div className="border-2 border-black mb-4 p-4 bg-white">

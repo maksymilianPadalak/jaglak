@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { User, Bot, Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, Mail, MailCheck, MailX, HandHeart, MessageCircle, CheckCircle, CreditCard } from 'lucide-react';
+import { User, Bot, Wifi, WifiOff, Image as ImageIcon, MessageSquare, Activity, Mail, MailCheck, MailX, HandHeart, CheckCircle, CreditCard } from 'lucide-react';
 
 interface CreditCard {
   numbers: string;
@@ -52,11 +52,11 @@ const mockPatients: Record<string, {
 }> = {
   '1': {
     id: '1',
-    name: 'Janusz Padalak',
+    name: 'Janusz',
     dateOfBirth: '1945-03-15',
-    patientImage: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&h=400&fit=crop',
+    patientImage: '/Janusz.png',
     robotId: 'ROB-001',
-    robotImage: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop',
+    robotImage: '/RobotForJanusz.png',
     sensitiveInfo: {
       medicalConditions: ['Hypertension', 'Type 2 Diabetes', 'Mild Dementia'],
       medications: ['Metformin 500mg', 'Lisinopril 10mg', 'Donepezil 5mg'],
@@ -424,8 +424,6 @@ export default function PatientDetailPage() {
     switch (action) {
       case 'pickUp':
         return <HandHeart className="h-5 w-5" />;
-      case 'talkTo':
-        return <MessageCircle className="h-5 w-5" />;
       case 'transferMoney':
         return <CreditCard className="h-5 w-5" />;
       case 'noAction':
@@ -527,6 +525,19 @@ export default function PatientDetailPage() {
         </div>
 
         {/* Latest Image Display */}
+        {activeView === 'latest' && !latestImage && (
+          <div className="mb-6 border-2 border-black bg-white p-12">
+            <div className="flex flex-col items-center justify-center text-center">
+              <ImageIcon className="h-16 w-16 text-black mb-4 opacity-50" />
+              <h3 className="text-xl font-black uppercase text-black mb-2">
+                No Images Received
+              </h3>
+              <p className="text-sm font-bold text-black opacity-70">
+                Waiting for images from the monitoring system...
+              </p>
+            </div>
+          </div>
+        )}
         {activeView === 'latest' && latestImage && (
           <div className="mb-6 border-2 border-black bg-white">
             <div className="flex items-center justify-between p-4 border-b-2 border-black bg-black text-white">
@@ -636,78 +647,77 @@ export default function PatientDetailPage() {
 
         {/* Patient Info Display */}
         {activeView === 'info' && patient && (
-          <div className="mb-6 border-2 border-black bg-white">
-            <div className="border-b-2 border-black p-4 bg-black text-white">
-              <h2 className="text-xl font-black uppercase">Patient Information</h2>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 p-4">
+          <div className="mb-6 bg-white">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
               {/* Left: Patient Image */}
-              <div className="border-2 border-black p-4 bg-white">
-                <div className="text-xs font-black uppercase text-black mb-2 opacity-70">
+              <div className="bg-white border-2 border-black p-6">
+                <div className="text-sm font-black uppercase text-black mb-4">
                   Patient Photo
                 </div>
-                <img
-                  src={patient.patientImage}
-                  alt={patient.name}
-                  className="w-full border-2 border-black"
-                />
+                <div className="border-2 border-black">
+                  <img
+                    src={patient.patientImage}
+                    alt={patient.name}
+                    className="w-full"
+                  />
+                </div>
               </div>
 
               {/* Right: Patient Details */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {/* Basic Info */}
-                <div className="border-2 border-black p-4 bg-white">
-                  <div className="text-xs font-black uppercase text-black mb-3 opacity-70">
+                <div className="bg-white border-2 border-black p-6">
+                  <div className="text-sm font-black uppercase text-black mb-4 border-b-2 border-black pb-2">
                     Basic Information
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center border-b border-black pb-2">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center py-2 border-b border-black">
                       <span className="text-xs font-bold uppercase text-black opacity-70">Name:</span>
-                      <span className="text-sm font-black uppercase text-black">{patient.name}</span>
+                      <span className="text-base font-black uppercase text-black">{patient.name}</span>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center py-2">
                       <span className="text-xs font-bold uppercase text-black opacity-70">Date of Birth:</span>
-                      <span className="text-sm font-black uppercase text-black">{new Date(patient.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      <span className="text-base font-black uppercase text-black">{new Date(patient.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Sensitive Info */}
-                <div className="border-2 border-black p-4 bg-white">
-                  <div className="text-xs font-black uppercase text-black mb-3 opacity-70">
+                <div className="bg-white border-2 border-black p-6">
+                  <div className="text-sm font-black uppercase text-black mb-4 border-b-2 border-black pb-2">
                     Sensitive Information
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-6">
                     <div>
-                      <div className="text-xs font-bold uppercase text-black opacity-70 mb-1">Medical Conditions:</div>
+                      <div className="text-xs font-bold uppercase text-black opacity-70 mb-3">Medical Conditions:</div>
                       <div className="flex flex-wrap gap-2">
                         {patient.sensitiveInfo.medicalConditions.map((condition, idx) => (
-                          <span key={idx} className="border border-black px-2 py-1 text-xs font-black uppercase text-black bg-white">
+                          <span key={idx} className="border-2 border-black px-3 py-2 text-xs font-black uppercase text-black bg-white">
                             {condition}
                           </span>
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <div className="text-xs font-bold uppercase text-black opacity-70 mb-1">Medications:</div>
+                    <div className="border-t-2 border-black pt-4">
+                      <div className="text-xs font-bold uppercase text-black opacity-70 mb-3">Medications:</div>
                       <div className="flex flex-wrap gap-2">
                         {patient.sensitiveInfo.medications.map((medication, idx) => (
-                          <span key={idx} className="border border-black px-2 py-1 text-xs font-black uppercase text-black bg-white">
+                          <span key={idx} className="border-2 border-black px-3 py-2 text-xs font-black uppercase text-black bg-white">
                             {medication}
                           </span>
                         ))}
                       </div>
                     </div>
-                    <div className="border-t border-black pt-2 space-y-2">
-                      <div className="flex justify-between items-center">
+                    <div className="border-t-2 border-black pt-4 space-y-3">
+                      <div className="flex justify-between items-center py-2 border-b border-black">
                         <span className="text-xs font-bold uppercase text-black opacity-70">Emergency Contact:</span>
                         <span className="text-sm font-black uppercase text-black">{patient.sensitiveInfo.emergencyContact}</span>
                       </div>
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center py-2 border-b border-black">
                         <span className="text-xs font-bold uppercase text-black opacity-70">Social Security Number:</span>
                         <span className="text-sm font-black uppercase font-mono text-black">{patient.sensitiveInfo.socialSecurityNumber}</span>
                       </div>
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center py-2">
                         <span className="text-xs font-bold uppercase text-black opacity-70">Bank Account:</span>
                         <span className="text-sm font-black uppercase font-mono text-black">{patient.sensitiveInfo.bankAccount}</span>
                       </div>
