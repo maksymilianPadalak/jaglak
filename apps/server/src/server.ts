@@ -127,20 +127,20 @@ const processAudioResponse = async (audioBuffer: Buffer, sender: WebSocket, orig
     const result = await transcribeAudio({
       audioBuffer,
       responseFormat: 'text',
-    }, (chunk) => {
-      // Stream audio chunks to all WebSocket clients as they arrive from Eleven Labs
-      console.log('[Audio] Broadcasting chunk to clients, size:', chunk.length, 'bytes');
-      clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(chunk);
-        }
-      });
     });
 
     console.log('[Audio] Processing complete:', {
       transcriptionLength: result.transcription.length,
       aiResponseLength: result.aiResponse.length,
       audioSize: result.audioBuffer.length,
+    });
+
+    // Broadcast complete MP3 file to all WebSocket clients
+    console.log('[Audio] Broadcasting complete MP3 to all clients, size:', result.audioBuffer.length, 'bytes');
+    clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(result.audioBuffer);
+      }
     });
 
     // Convert AI response audio buffer to base64 data URL
