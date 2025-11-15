@@ -144,15 +144,15 @@ const processAudioResponse = async (audioBuffer: Buffer, sender: WebSocket, orig
 
     // Send audio message to all clients with isLoading: false to stop UI animation
     const audioMessage = JSON.stringify({
-      type: 'audio',
+        type: 'audio',
       audio: responseAudioDataUrl,
-      isLoading: false,
-    });
+        isLoading: false,
+      });
 
     clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(audioMessage);
-      }
+    }
     });
   } catch (error) {
     console.error('[Audio] Error processing audio:', error);

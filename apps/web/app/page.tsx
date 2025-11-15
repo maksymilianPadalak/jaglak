@@ -117,7 +117,7 @@ export default function Home() {
             const existingIndex = prev.findIndex(
               (msg) => msg.type === 'audio' && (msg.isLoading || !msg.transcription)
             );
-
+            
             if (existingIndex !== -1 && data.isLoading === false) {
               // Update existing loading message with response
               const updated = [...prev];
@@ -307,7 +307,7 @@ export default function Home() {
             </div>
           </div>
         )}
-
+        
         {/* Header */}
         <div className="border-2 border-black mb-4 p-3 bg-white">
           <div className="flex items-center justify-between flex-wrap gap-3">

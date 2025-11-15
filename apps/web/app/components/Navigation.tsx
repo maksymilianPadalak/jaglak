@@ -76,6 +76,16 @@ export default function Navigation() {
         >
           DB
         </Link>
+        <Link
+          href="/shop"
+          className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
+            isActive('/shop')
+              ? 'bg-black text-white'
+              : 'bg-white text-black hover:bg-black hover:text-white'
+          }`}
+        >
+          Shop
+        </Link>
       </nav>
     </header>
   );
