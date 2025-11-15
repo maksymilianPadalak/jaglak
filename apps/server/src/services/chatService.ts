@@ -67,7 +67,7 @@ export async function analyzeImage(imageBase64: string): Promise<ImageAnalysisRe
           content: [
             {
               type: 'input_text',
-              text: 'Analyze this image and determine what action should be taken. Return ONLY a valid JSON object with "description" (string describing what you see) and "action" (one of: "pickUp", "talkTo", or "noAction").',
+              text: 'Analyze this image and determine what action should be taken. Examples: if person looks happy - noAction, if person has fallen - pickUp, if person cries - talkTo. Return ONLY a valid JSON object with "description" (string describing what you see) and "action" (one of: "pickUp", "talkTo", or "noAction").',
             },
             {
               type: 'input_image',
