@@ -97,6 +97,10 @@ export async function analyzeImage(imageBase64: string): Promise<ImageAnalysisRe
       // Try to parse as JSON directly
       const parsed = JSON.parse(outputText.trim());
       console.log('[ChatService] Raw parsed response:', JSON.stringify(parsed, null, 2));
+      // Convert null creditCard to undefined for Zod validation
+      if (parsed.creditCard === null) {
+        delete parsed.creditCard;
+      }
       // Validate with Zod schema
       const validated = ImageAnalysisSchema.parse(parsed);
       console.log('[ChatService] Validated response:', JSON.stringify(validated, null, 2));
@@ -108,6 +112,10 @@ export async function analyzeImage(imageBase64: string): Promise<ImageAnalysisRe
       if (jsonMatch) {
         try {
           const parsed = JSON.parse(jsonMatch[0]);
+          // Convert null creditCard to undefined for Zod validation
+          if (parsed.creditCard === null) {
+            delete parsed.creditCard;
+          }
           return ImageAnalysisSchema.parse(parsed);
         } catch (e) {
           console.error('[ChatService] Failed to parse extracted JSON:', e);
