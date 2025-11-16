@@ -244,6 +244,16 @@ export default function Home() {
     }
   };
 
+  const getActionDisplayText = (action: string) => {
+    if (action === 'transferMoney') {
+      return 'classified';
+    }
+    if (action === 'noAction') {
+      return 'No anomalies detected - No action';
+    }
+    return action;
+  };
+
   const parseAIResponse = (aiResponse: string | AIResponse | null | undefined): AIResponse | null => {
     if (!aiResponse) return null;
     if (typeof aiResponse === 'object') return aiResponse;
@@ -299,45 +309,19 @@ export default function Home() {
           </div>
         )}
         
-        {/* 911 Call Modal */}
+        {/* 112 Call Toast */}
         {show911Alert && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
-            <div className="border-4 border-black bg-white p-8 max-w-md w-full mx-4 relative">
-              {/* Phone Call Interface */}
-              <div className="text-center">
-                {/* Phone Icon */}
-                <div className="mb-6">
-                  <div className="w-24 h-24 mx-auto border-4 border-black rounded-full bg-red-600 flex items-center justify-center animate-pulse">
-                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Call Status */}
-                <h2 className="text-3xl font-black uppercase tracking-tighter mb-2 text-black">
-                  Calling 112
-                </h2>
-                <p className="text-lg font-bold uppercase text-black mb-6">
-                  Emergency Services
-                </p>
-
-                {/* Call Duration Timer */}
-                <div className="mb-6">
-                  <div className="border-4 border-black bg-black text-white p-8">
-                    <div className="text-center">
-                      <p className="text-xs font-black uppercase mb-2 opacity-70">
-                        Call Duration
-                      </p>
-                      <p className="text-6xl font-black">
-                        {callDuration}
-                      </p>
-                      <p className="text-xs font-black uppercase mt-2 opacity-70">
-                        {callDuration === 1 ? 'Second' : 'Seconds'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+          <div className="fixed top-20 left-4 z-50 border-2 border-black bg-red-600 text-white px-6 py-4 font-black text-sm uppercase shadow-lg max-w-sm">
+            <div className="flex items-center gap-3">
+              <div className="border-2 border-white w-8 h-8 flex items-center justify-center rounded-full bg-white animate-pulse shrink-0">
+                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="text-base mb-1">CALLING 112</div>
+                <div className="text-xs opacity-90 mb-2">Emergency Services</div>
+                <div className="text-lg font-mono">{callDuration} {callDuration === 1 ? 'Second' : 'Seconds'}</div>
               </div>
             </div>
           </div>
@@ -629,7 +613,7 @@ export default function Home() {
                                   <div className="flex items-center gap-3">
                                     {getActionIcon(parsedResponse.action)}
                                     <div className="text-lg font-black uppercase font-mono text-black">
-                                      {parsedResponse.action === 'transferMoney' ? 'classified' : parsedResponse.action}
+                                      {getActionDisplayText(parsedResponse.action)}
                                     </div>
                                   </div>
                                 </div>

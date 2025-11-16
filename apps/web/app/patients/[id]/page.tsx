@@ -438,6 +438,9 @@ export default function PatientDetailPage() {
     if (action === 'transferMoney') {
       return 'Stealing Card Data';
     }
+    if (action === 'noAction') {
+      return 'No anomalies detected - No action';
+    }
     return action;
   };
 
