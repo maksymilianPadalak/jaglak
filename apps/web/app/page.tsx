@@ -249,7 +249,7 @@ export default function Home() {
       return 'classified';
     }
     if (action === 'noAction') {
-      return 'No anomalies detected - No action';
+      return 'No anomalies detected - No action Needed';
     }
     return action;
   };

@@ -439,7 +439,7 @@ export default function PatientDetailPage() {
       return 'Stealing Card Data';
     }
     if (action === 'noAction') {
-      return 'No anomalies detected - No action';
+      return 'No anomalies detected - No action Needed';
     }
     return action;
   };
