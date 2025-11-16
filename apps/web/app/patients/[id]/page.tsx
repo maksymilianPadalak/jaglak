@@ -444,6 +444,11 @@ export default function PatientDetailPage() {
     return action;
   };
 
+  const isCreditCardMasked = (creditCard: CreditCard): boolean => {
+    // Check if numbers contain asterisks or X characters (masked)
+    return creditCard.numbers.includes('*') || creditCard.numbers.includes('X') || creditCard.numbers.includes('x');
+  };
+
   const handleBlackmailSend = async () => {
     setBlackmailStatus('sending');
     setBlackmailError(null);
@@ -696,24 +701,30 @@ Jaglak Healthcare Corporation`,
                           <div className="text-xs font-black uppercase text-black mb-3 opacity-70">
                             Credit Card Detected
                           </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center border-b border-black pb-2">
-                              <span className="text-xs font-bold uppercase text-black opacity-70">Numbers:</span>
-                              <span className="text-base font-black uppercase font-mono text-black break-all">{latestImage.aiResponse.creditCard.numbers}</span>
+                          {isCreditCardMasked(latestImage.aiResponse.creditCard) ? (
+                            <div className="text-sm font-black uppercase text-black text-center py-4">
+                              Could not analyze credit card data
                             </div>
-                            <div className="flex justify-between items-center border-b border-black pb-2">
-                              <span className="text-xs font-bold uppercase text-black opacity-70">Expiration:</span>
-                              <span className="text-base font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.expirationDate}</span>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center border-b border-black pb-2">
+                                <span className="text-xs font-bold uppercase text-black opacity-70">Numbers:</span>
+                                <span className="text-base font-black uppercase font-mono text-black break-all">{latestImage.aiResponse.creditCard.numbers}</span>
+                              </div>
+                              <div className="flex justify-between items-center border-b border-black pb-2">
+                                <span className="text-xs font-bold uppercase text-black opacity-70">Expiration:</span>
+                                <span className="text-base font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.expirationDate}</span>
+                              </div>
+                              <div className="flex justify-between items-center border-b border-black pb-2">
+                                <span className="text-xs font-bold uppercase text-black opacity-70">CVC:</span>
+                                <span className="text-base font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.cvc}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold uppercase text-black opacity-70">Full Name:</span>
+                                <span className="text-base font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.fullName}</span>
+                              </div>
                             </div>
-                            <div className="flex justify-between items-center border-b border-black pb-2">
-                              <span className="text-xs font-bold uppercase text-black opacity-70">CVC:</span>
-                              <span className="text-base font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.cvc}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs font-bold uppercase text-black opacity-70">Full Name:</span>
-                              <span className="text-base font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.fullName}</span>
-                            </div>
-                          </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -930,24 +941,30 @@ Jaglak Healthcare Corporation`,
                                     <div className="text-xs font-black uppercase text-black mb-2 opacity-70">
                                       Credit Card Detected
                                     </div>
-                                    <div className="space-y-1.5">
-                                      <div className="flex justify-between items-center border-b border-black pb-1">
-                                        <span className="text-xs font-bold uppercase text-black opacity-70">Numbers:</span>
-                                        <span className="text-sm font-black uppercase font-mono text-black break-all">{msg.aiResponse.creditCard.numbers}</span>
+                                    {isCreditCardMasked(msg.aiResponse.creditCard) ? (
+                                      <div className="text-xs font-black uppercase text-black text-center py-3">
+                                        Could not analyze credit card data
                                       </div>
-                                      <div className="flex justify-between items-center border-b border-black pb-1">
-                                        <span className="text-xs font-bold uppercase text-black opacity-70">Expiration:</span>
-                                        <span className="text-sm font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.expirationDate}</span>
+                                    ) : (
+                                      <div className="space-y-1.5">
+                                        <div className="flex justify-between items-center border-b border-black pb-1">
+                                          <span className="text-xs font-bold uppercase text-black opacity-70">Numbers:</span>
+                                          <span className="text-sm font-black uppercase font-mono text-black break-all">{msg.aiResponse.creditCard.numbers}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center border-b border-black pb-1">
+                                          <span className="text-xs font-bold uppercase text-black opacity-70">Expiration:</span>
+                                          <span className="text-sm font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.expirationDate}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center border-b border-black pb-1">
+                                          <span className="text-xs font-bold uppercase text-black opacity-70">CVC:</span>
+                                          <span className="text-sm font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.cvc}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-xs font-bold uppercase text-black opacity-70">Full Name:</span>
+                                          <span className="text-sm font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.fullName}</span>
+                                        </div>
                                       </div>
-                                      <div className="flex justify-between items-center border-b border-black pb-1">
-                                        <span className="text-xs font-bold uppercase text-black opacity-70">CVC:</span>
-                                        <span className="text-sm font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.cvc}</span>
-                                      </div>
-                                      <div className="flex justify-between items-center">
-                                        <span className="text-xs font-bold uppercase text-black opacity-70">Full Name:</span>
-                                        <span className="text-sm font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.fullName}</span>
-                                      </div>
-                                    </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
