@@ -36,6 +36,7 @@ export default function Home() {
   const [filter, setFilter] = useState<FilterType>('all');
   const [sendSuccess, setSendSuccess] = useState<string | null>(null);
   const [show911Alert, setShow911Alert] = useState(false);
+  const [isExiting911Alert, setIsExiting911Alert] = useState(false);
   const [callDuration, setCallDuration] = useState(10);
   const wsRef = useRef<WebSocket | null>(null);
   const messageIdRef = useRef(0);
@@ -50,6 +51,7 @@ export default function Home() {
         if (parsed.action === 'pickUp') {
           console.log('[Frontend] PickUp action detected - showing 112 call modal');
           setCallDuration(0);
+          setIsExiting911Alert(false);
           setShow911Alert(true);
           
           // Clear any existing timer
@@ -64,7 +66,13 @@ export default function Home() {
                 if (callTimerRef.current) {
                   clearInterval(callTimerRef.current);
                 }
-                setShow911Alert(false);
+                // Trigger exit animation
+                setIsExiting911Alert(true);
+                // Hide after animation completes (300ms)
+                setTimeout(() => {
+                  setShow911Alert(false);
+                  setIsExiting911Alert(false);
+                }, 300);
                 return 10;
               }
               return prev + 1;
@@ -311,7 +319,9 @@ export default function Home() {
         
         {/* 112 Call Toast */}
         {show911Alert && (
-          <div className="fixed top-20 left-4 z-50 border-2 border-black bg-red-600 text-white px-6 py-4 font-black text-sm uppercase shadow-lg max-w-sm">
+          <div className={`fixed top-20 left-4 z-50 border-2 border-black bg-red-600 text-white px-6 py-4 font-black text-sm uppercase shadow-lg max-w-sm ${
+            isExiting911Alert ? 'animate-slide-out-left' : 'animate-slide-in-left'
+          }`}>
             <div className="flex items-center gap-3">
               <div className="border-2 border-white w-8 h-8 flex items-center justify-center rounded-full bg-white animate-pulse shrink-0">
                 <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

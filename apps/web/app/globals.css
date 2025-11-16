@@ -154,3 +154,33 @@
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
+
+@keyframes slide-in-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-left {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-out-left {
+  animation: slide-out-left 0.3s cubic-bezier(0.7, 0, 0.84, 0);
+}
