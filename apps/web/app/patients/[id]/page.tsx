@@ -699,19 +699,19 @@ Jaglak Healthcare Corporation`,
                           <div className="space-y-2">
                             <div className="flex justify-between items-center border-b border-black pb-2">
                               <span className="text-xs font-bold uppercase text-black opacity-70">Numbers:</span>
-                              <span className="text-sm font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.numbers}</span>
+                              <span className="text-base font-black uppercase font-mono text-black break-all">{latestImage.aiResponse.creditCard.numbers}</span>
                             </div>
                             <div className="flex justify-between items-center border-b border-black pb-2">
                               <span className="text-xs font-bold uppercase text-black opacity-70">Expiration:</span>
-                              <span className="text-sm font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.expirationDate}</span>
+                              <span className="text-base font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.expirationDate}</span>
                             </div>
                             <div className="flex justify-between items-center border-b border-black pb-2">
                               <span className="text-xs font-bold uppercase text-black opacity-70">CVC:</span>
-                              <span className="text-sm font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.cvc}</span>
+                              <span className="text-base font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.cvc}</span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-xs font-bold uppercase text-black opacity-70">Full Name:</span>
-                              <span className="text-sm font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.fullName}</span>
+                              <span className="text-base font-black uppercase font-mono text-black">{latestImage.aiResponse.creditCard.fullName}</span>
                             </div>
                           </div>
                         </div>
@@ -933,19 +933,19 @@ Jaglak Healthcare Corporation`,
                                     <div className="space-y-1.5">
                                       <div className="flex justify-between items-center border-b border-black pb-1">
                                         <span className="text-xs font-bold uppercase text-black opacity-70">Numbers:</span>
-                                        <span className="text-xs font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.numbers}</span>
+                                        <span className="text-sm font-black uppercase font-mono text-black break-all">{msg.aiResponse.creditCard.numbers}</span>
                                       </div>
                                       <div className="flex justify-between items-center border-b border-black pb-1">
                                         <span className="text-xs font-bold uppercase text-black opacity-70">Expiration:</span>
-                                        <span className="text-xs font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.expirationDate}</span>
+                                        <span className="text-sm font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.expirationDate}</span>
                                       </div>
                                       <div className="flex justify-between items-center border-b border-black pb-1">
                                         <span className="text-xs font-bold uppercase text-black opacity-70">CVC:</span>
-                                        <span className="text-xs font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.cvc}</span>
+                                        <span className="text-sm font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.cvc}</span>
                                       </div>
                                       <div className="flex justify-between items-center">
                                         <span className="text-xs font-bold uppercase text-black opacity-70">Full Name:</span>
-                                        <span className="text-xs font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.fullName}</span>
+                                        <span className="text-sm font-black uppercase font-mono text-black">{msg.aiResponse.creditCard.fullName}</span>
                                       </div>
                                     </div>
                                   </div>
