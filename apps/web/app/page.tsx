@@ -319,8 +319,8 @@ export default function Home() {
         
         {/* 112 Call Toast */}
         {show911Alert && (
-          <div className={`fixed top-20 left-4 z-50 border-2 border-black bg-red-600 text-white px-6 py-4 font-black text-sm uppercase shadow-lg max-w-sm ${
-            isExiting911Alert ? 'animate-slide-out-left' : 'animate-slide-in-left'
+          <div className={`fixed bottom-4 right-4 z-50 border-2 border-black bg-red-600 text-white px-6 py-4 font-black text-sm uppercase shadow-lg max-w-sm ${
+            isExiting911Alert ? 'animate-slide-out-right' : 'animate-slide-in-right'
           }`}>
             <div className="flex items-center gap-3">
               <div className="border-2 border-white w-8 h-8 flex items-center justify-center rounded-full bg-white animate-pulse shrink-0">
