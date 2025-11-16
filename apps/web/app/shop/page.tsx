@@ -42,18 +42,12 @@ export default function ShopPage() {
           <div className="grid md:grid-cols-2 gap-0">
             {/* Product Image */}
             <div className="border-r-2 border-black p-6 flex items-center justify-center bg-gray-50">
-              <div className="w-full aspect-square relative border-2 border-black bg-gray-200 flex items-center justify-center">
-                <span className="text-black font-bold text-sm uppercase">
-                  Product Image
-                </span>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-2">🤖</div>
-                    <div className="text-xs font-black uppercase text-black opacity-50">
-                      Jaglak Robot
-                    </div>
-                  </div>
-                </div>
+              <div className="w-full aspect-square relative border-2 border-black bg-white flex items-center justify-center overflow-hidden">
+                <img
+                  src="/RobotForJanusz.png"
+                  alt="Jaglak Robot"
+                  className="w-full h-full object-contain"
+                />
               </div>
             </div>
 
