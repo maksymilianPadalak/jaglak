@@ -17,6 +17,16 @@ export default function Navigation() {
     <header className="sticky top-0 z-50 border-b-2 border-black bg-white/30 backdrop-blur">
       <nav className="max-w-6xl mx-auto flex items-center gap-3 p-4 bg-white/30">
         <Link
+          href="/landing"
+          className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
+            isActive('/landing')
+              ? 'bg-black text-white'
+              : 'bg-white text-black hover:bg-black hover:text-white'
+          }`}
+        >
+          Landing
+        </Link>
+        <Link
           href="/shop"
           className={`border-2 border-black px-4 py-2 font-black text-sm uppercase transition-colors ${
             isActive('/shop')
